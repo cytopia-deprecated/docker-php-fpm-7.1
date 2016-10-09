@@ -6,6 +6,17 @@ MAINTAINER "cytopia" <cytopia@everythingcli.org>
 
 
 ##
+## Labels
+##
+LABEL \
+	name="cytopia's PHP-FPM 7.1 Image" \
+	image="php-fpm-7.1" \
+	vendor="cytopia" \
+	license="MIT" \
+	build-date="2016-10-09"
+
+
+##
 ## Bootstrap Scipts
 ##
 COPY ./scripts/docker-install.sh /
