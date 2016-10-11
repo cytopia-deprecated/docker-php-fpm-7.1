@@ -208,6 +208,9 @@ else
 		log "info" "Setting PHP: xdebug.remote_log=\"/var/log/php-fpm/xdebug.log\""
 		run "echo 'xdebug.remote_log=\"/var/log/php-fpm/xdebug.log\"' >> ${XDEBUG_CONFIG}"
 
+		log "info" "Setting PHP: xdebug.max_nesting_level=2048"
+		run "echo 'xdebug.max_nesting_level=2048' >> ${XDEBUG_CONFIG}"
+
 
 	# ---- 2/3 Disabled ----
 	elif [ "${PHP_XDEBUG_ENABLE}" = "0" ]; then
