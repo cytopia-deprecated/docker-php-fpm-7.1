@@ -6,16 +6,14 @@
 PHP_FPM_POOL_CONF="/etc/php-fpm.d/www.conf"
 PHP_FPM_CONF="/etc/php-fpm.conf"
 
+# Custom php directory to look for *.ini files
+PHP_CUST_CONF_DIR="/etc/php-custom.d"
+
 MY_USER="apache"
 MY_GROUP="apache"
 MY_UID="48"
 MY_GID="48"
 
-
-# Used to normalize directories between php and php-fpm
-PHP_SESSION_SAVE_PATH="/var/lib/php/session"
-PHP_SOAP_WSDL_CACHE_DIR="/var/lib/php/wsdlcache"
-PHP_OPCACHE_FILE_CACHE="/var/lib/php/opcache"
 
 
 ###
@@ -65,6 +63,7 @@ print_headline "2. Adding Repository"
 run "yum -y install epel-release"
 run "rpm -ivh http://rpms.famillecollet.com/enterprise/remi-release-7.rpm"
 run "yum-config-manager --enable remi"
+run "yum-config-manager --disable remi-php55"
 run "yum-config-manager --disable remi-php56"
 run "yum-config-manager --disable remi-php70"
 run "yum-config-manager --enable remi-php71"
@@ -101,7 +100,6 @@ run "yum -y install \
 	php-ldap \
 	php-mbstring \
 	php-mcrypt \
-	php-mysql \
 	php-mysqli \
 	php-mysqlnd \
 	php-opcache \
@@ -134,6 +132,11 @@ run "sed -i'' 's/^;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php.ini"
 # Needed for PHP to read out docker-compose variables
 run "sed -i'' 's/^variables_order[[:space:]]*=.*$/variables_order = EGPCS/g' /etc/php.ini"
 
+# Add custom php configuration directory
+if [ ! -d "${PHP_CUST_CONF_DIR}" ]; then
+	run "mkdir -p ${PHP_CUST_CONF_DIR}"
+fi
+
 
 
 ###
@@ -161,40 +164,8 @@ run "sed -i'' '/;access.format[[:space:]]*=.*$/s/^;//' ${PHP_FPM_POOL_CONF}"
 run "sed -i'' 's|^;catch_workers_output[[:space:]]*=.*$|catch_workers_output = yes|g' ${PHP_FPM_POOL_CONF}"
 # Prevent PHP-FPM from clearing docker-compose environmental variables
 run "sed -i'' 's|^;clear_env[[:space:]]*=.*$|clear_env = no|g' ${PHP_FPM_POOL_CONF}"
-
-
-
-###
-### PHP/PHP-FPM Post fixes (tmp directories)
-###
-print_headline "8. PHP/PHP-FPM Post fixes (tmp directories)"
-
-# Check Opcache file
-if [ ! -f "/etc/php.d/10-opcache.ini" ]; then
-	echo "Error, opcache config file not found in: /etc/php.d/10-opcache.ini"
-	exit 1
-fi
-
-# PHP Adjust folders
-run "sed -i'' 's|^;*session.save_path[[:space:]]*=.*$|session.save_path = \"${PHP_SESSION_SAVE_PATH}\"|g' /etc/php.ini"
-run "sed -i'' 's|^;*soap.wsdl_cache_dir[[:space:]]*=.*$|soap.wsdl_cache_dir = \"${PHP_SOAP_WSDL_CACHE_DIR}\"|g' /etc/php.ini"
-run "sed -i'' 's|^;*opcache.file_cache[[:space:]]*=.*$|opcache.file_cache = \"${PHP_OPCACHE_FILE_CACHE}\"|g' /etc/php.d/10-opcache.ini"
-
-# PHP-FPM Adjust folders
-run "sed -i'' 's|^;*php_value\[session.save_path\][[:space:]]*=.*$|php_value\[session.save_path\] = ${PHP_SESSION_SAVE_PATH}|g' ${PHP_FPM_POOL_CONF}"
-run "sed -i'' 's|^;*php_value\[soap.wsdl_cache_dir\][[:space:]]*=.*$|php_value\[soap.wsdl_cache_dir\] = ${PHP_SOAP_WSDL_CACHE_DIR}|g' ${PHP_FPM_POOL_CONF}"
-run "sed -i'' 's|^;*php_value\[opcache.file_cache\][[:space:]]*=.*$|php_value\[opcache.file_cache\] = ${PHP_OPCACHE_FILE_CACHE}|g' ${PHP_FPM_POOL_CONF}"
-
-# Fix permissions
-if [ ! -d "${PHP_SESSION_SAVE_PATH}" ]; then mkdir "${PHP_SESSION_SAVE_PATH}"; fi
-if [ ! -d "${PHP_SOAP_WSDL_CACHE_DIR}" ]; then mkdir "${PHP_SOAP_WSDL_CACHE_DIR}"; fi
-if [ ! -d "${PHP_OPCACHE_FILE_CACHE}" ]; then mkdir "${PHP_OPCACHE_FILE_CACHE}"; fi
-run "chown -R ${MY_USER}:${MY_GROUP} ${PHP_SESSION_SAVE_PATH}"
-run "chown -R ${MY_USER}:${MY_GROUP} ${PHP_SOAP_WSDL_CACHE_DIR}"
-run "chown -R ${MY_USER}:${MY_GROUP} ${PHP_OPCACHE_FILE_CACHE}"
-run "chmod 777  ${PHP_SESSION_SAVE_PATH}"
-run "chmod 777  ${PHP_SOAP_WSDL_CACHE_DIR}"
-run "chmod 777  ${PHP_OPCACHE_FILE_CACHE}"
+# Adding default listening directive
+run "sed -i'' 's|^listen[[:space:]]*=.*$|listen = 0.0.0.0:9000|g' ${PHP_FPM_POOL_CONF}"
 
 
 

@@ -5,9 +5,14 @@
 ###
 DEBUG_COMMANDS=0
 
-PHP_FPM_POOL_CONF="/etc/php-fpm.d/www.conf"
-PHP_FPM_DEFAULT_PORT="9000"
+# If $PHP_CUST_CONF_DIR is mounted from the
+# host, all *.ini files from $PHP_CUST_CONF_DIR
+# will be copied to $PHP_CONF_DIR
+PHP_CONF_DIR="/etc/php.d"				# Default php config dir
+PHP_CUST_CONF_DIR="/etc/php-custom.d"	# Custom php directory to look for *.ini files
+
 PHP_XDEBUG_DEFAULT_PORT="9000"
+
 
 
 ###
@@ -115,24 +120,11 @@ log "info" "Docker date set to: $(date)"
 
 
 ###
-### PHP-FPM Listening Port
+### Custom PHP config
 ###
 
-if ! set | grep '^PHP_FPM_PORT=' >/dev/null 2>&1; then
-	log "warn" "\$PHP_FPM_PORT not set, defaulting to ${PHP_FPM_DEFAULT_PORT}"
-	PHP_FPM_PORT="${PHP_FPM_DEFAULT_PORT}"
-elif ! isint "${PHP_FPM_PORT}"; then
-	log "warn" "\$PHP_FPM_PORT is not a valid integer: ${PHP_FPM_PORT}"
-	log "warn" "Defaulting to: ${PHP_FPM_DEFAULT_PORT}"
-	PHP_FPM_PORT="${PHP_FPM_DEFAULT_PORT}"
-elif [ "${PHP_FPM_PORT}" -lt "1" ] || [ "${PHP_FPM_PORT}" -gt "65535" ]; then
-	log "warn" "\$PHP_FPM_PORT is out of range: ${PHP_FPM_PORT}"
-	log "warn" "Defaulting to: ${PHP_FPM_DEFAULT_PORT}"
-	PHP_FPM_PORT="${PHP_FPM_DEFAULT_PORT}"
-fi
-# Apply Port
-log "info" "Setting PHP-FPM Pool: listen=0.0.0.0:${PHP_FPM_PORT}"
-run "sed -i'' 's|^listen[[:space:]]*=.*$|listen = 0.0.0.0:${PHP_FPM_PORT}|g' ${PHP_FPM_POOL_CONF}"
+log "info" "Adding custom configuration files:"
+run "find ${PHP_CUST_CONF_DIR} -type f -iname \"*.ini\" -exec echo \"Copying: {} to ${PHP_CONF_DIR}/\" \; -exec cp \"{}\" ${PHP_CONF_DIR}/ \;"
 
 
 
@@ -199,17 +191,8 @@ else
 		log "info" "Setting PHP: xdebug.remote_host=${PHP_XDEBUG_REMOTE_HOST}"
 		run "echo 'xdebug.remote_host=${PHP_XDEBUG_REMOTE_HOST}' >> ${XDEBUG_CONFIG}"
 
-		log "info" "Setting PHP: xdebug.remote_autostart=1"
-		run "echo 'xdebug.remote_autostart=1' >> ${XDEBUG_CONFIG}"
-
-		log "info" "Setting PHP: xdebug.remote_handler=dbgp"
-		run "echo 'xdebug.remote_handler=dbgp' >> ${XDEBUG_CONFIG}"
-
 		log "info" "Setting PHP: xdebug.remote_log=\"/var/log/php-fpm/xdebug.log\""
 		run "echo 'xdebug.remote_log=\"/var/log/php-fpm/xdebug.log\"' >> ${XDEBUG_CONFIG}"
-
-		log "info" "Setting PHP: xdebug.max_nesting_level=2048"
-		run "echo 'xdebug.max_nesting_level=2048' >> ${XDEBUG_CONFIG}"
 
 
 	# ---- 2/3 Disabled ----
@@ -226,93 +209,6 @@ else
 	fi
 
 fi
-
-
-
-###
-### PHP Tweaks
-###
-
-# max_execution_time
-if ! set | grep '^PHP_MAX_EXECUTION_TIME=' >/dev/null 2>&1; then
-	log "info" "\$PHP_MAX_EXECUTION_TIME not set. Keeping default"
-else
-	log "info" "Setting PHP: max_execution_time=${PHP_MAX_EXECUTION_TIME}"
-	run "sed -i'' 's|^max_execution_time[[:space:]]*=.*$|max_execution_time = ${PHP_MAX_EXECUTION_TIME}|g' /etc/php.ini"
-fi
-
-# max_input_time
-if ! set | grep '^PHP_MAX_INPUT_TIME=' >/dev/null 2>&1; then
-	log "info" "\$PHP_MAX_INPUT_TIME not set. Keeping default"
-else
-	log "info" "Setting PHP: max_input_time=${PHP_MAX_INPUT_TIME}"
-	run "sed -i'' 's|^max_input_time[[:space:]]*=.*$|max_input_time = ${PHP_MAX_INPUT_TIME}|g' /etc/php.ini"
-fi
-
-# memory_limit
-if ! set | grep '^PHP_MEMORY_LIMIT=' >/dev/null 2>&1; then
-	log "info" "\$PHP_MEMORY_LIMIT not set. Keeping default"
-else
-	log "info" "Setting PHP: memory_limit=${PHP_MEMORY_LIMIT}"
-	run "sed -i'' 's|^memory_limit[[:space:]]*=.*$|memory_limit = ${PHP_MEMORY_LIMIT}|g' /etc/php.ini"
-fi
-
-# post_max_size
-if ! set | grep '^PHP_POST_MAX_SIZE=' >/dev/null 2>&1; then
-	log "info" "\$PHP_POST_MAX_SIZE not set. Keeping default"
-else
-	log "info" "Setting PHP: post_max_size=${PHP_POST_MAX_SIZE}"
-	run "sed -i'' 's|^post_max_size[[:space:]]*=.*$|post_max_size = ${PHP_POST_MAX_SIZE}|g' /etc/php.ini"
-fi
-
-# upload_max_filesize
-if ! set | grep '^PHP_UPLOAD_MAX_FILESIZE=' >/dev/null 2>&1; then
-	log "info" "\$PHP_UPLOAD_MAX_FILESIZE not set. Keeping default"
-else
-	log "info" "Setting PHP: upload_max_filesize=${PHP_UPLOAD_MAX_FILESIZE}"
-	run "sed -i'' 's|^upload_max_filesize[[:space:]]*=.*$|upload_max_filesize = ${PHP_UPLOAD_MAX_FILESIZE}|g' /etc/php.ini"
-fi
-
-# max_input_vars
-if ! set | grep '^PHP_MAX_INPUT_VARS=' >/dev/null 2>&1; then
-	log "info" "\$PHP_MAX_INPUT_VARS not set. Keeping default"
-else
-	log "info" "Setting PHP: max_input_vars=${PHP_MAX_INPUT_VARS}"
-	run "sed -i'' 's|.*max_input_vars[[:space:]]*=.*$|max_input_vars = ${PHP_MAX_INPUT_VARS}|g' /etc/php.ini"
-fi
-
-
-
-
-###
-### PHP Error Handling
-###
-
-# error_reporting
-if ! set | grep '^PHP_ERROR_REPORTING=' >/dev/null 2>&1; then
-	log "info" "\$PHP_ERROR_REPORTING not set. Keeping default"
-else
-	log "info" "Setting PHP: error_reporting=${PHP_ERROR_REPORTING}"
-	run "sed -i'' 's|^error_reporting[[:space:]]*=.*$|error_reporting = ${PHP_ERROR_REPORTING}|g' /etc/php.ini"
-fi
-
-# display_errors
-if ! set | grep '^PHP_DISPLAY_ERRORS=' >/dev/null 2>&1; then
-	log "info" "\$PHP_DISPLAY_ERRORS not set. Keeping default"
-else
-	log "info" "Setting PHP: display_errors=${PHP_DISPLAY_ERRORS}"
-	run "sed -i'' 's|^display_errors[[:space:]]*=.*$|display_errors = ${PHP_DISPLAY_ERRORS}|g' /etc/php.ini"
-fi
-
-# track_errors
-if ! set | grep '^PHP_TRACK_ERRORS=' >/dev/null 2>&1; then
-	log "info" "\$PHP_TRACK_ERRORS not set. Keeping default"
-else
-	log "info" "Setting PHP: track_errors=${PHP_TRACK_ERRORS}"
-	run "sed -i'' 's|^track_errors[[:space:]]*=.*$|track_errors = ${PHP_TRACK_ERRORS}|g' /etc/php.ini"
-fi
-
-
 
 
 
@@ -372,7 +268,7 @@ else
 	if [ "${MOUNT_MYSQL_SOCKET_TO_LOCALDISK}" = "1" ]; then
 		if ! set | grep '^MYSQL_SOCKET_PATH=' >/dev/null 2>&1; then
 			log "err" "You have enabled to mount mysql socket to local disk."
-			log "err""\$MYSQL_SOCKET_PATH must be set for this to work."
+			log "err" "\$MYSQL_SOCKET_PATH must be set for this to work."
 			exit 1
 		fi
 
