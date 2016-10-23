@@ -1,6 +1,6 @@
 # PHP-FPM 7.1 Docker
 
-[![](https://images.microbadger.com/badges/version/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/image/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/license/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1")
+[![Build Status](https://travis-ci.org/cytopia/docker-php-fpm-7.1.svg?branch=master)](https://travis-ci.org/cytopia/docker-php-fpm-7.1) [![](https://images.microbadger.com/badges/version/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/image/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/license/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1")
 
 [![cytopia/php-fpm-7.1](http://dockeri.co/image/cytopia/php-fpm-7.1)](https://hub.docker.com/r/cytopia/php-fpm-7.1/)
 
@@ -8,33 +8,15 @@
 
 ----
 
-PHP-FPM 7.1 Docker on CentOS 7
+**PHP-FPM 7.1 Docker on CentOS 7**
 
-this docker image is part of the **[devilbox](https://github.com/cytopia/devilbox)**
+[![Devilbox](https://raw.githubusercontent.com/cytopia/devilbox/master/.devilbox/www/htdocs/assets/img/devilbox_80.png)](https://github.com/cytopia/devilbox)
+
+<sub>This docker image is part of the **[devilbox](https://github.com/cytopia/devilbox)**</sub>
 
 ----
 
-## Usage
-
-Simple usage
-```shell
-$ docker run -i -t cytopia/php-fpm-7.1
-```
-
-Add php config directory to overwrite php.ini directives during startup.
-```shell
-$ docker run -i -v ~/.etc/php.d:/etc/php-custom.d -t cytopia/php-fpm-7.1
-```
-
-Mount a MySQL socket, (from `~/run/mysqld`) so you can use php's `mysql[i]` functions to connect to `localhost`:
-```shell
-$ docker run -i -v ~/run/mysqld:/var/run/mysqld -e MOUNT_MYSQL_SOCKET_TO_LOCALDISK=1 -e MYSQL_SOCKET_PATH=/var/run/mysqld -t cytopia/php-fpm-7.1
-```
-
-
-
 ## Options
-
 
 ### Environmental variables
 
@@ -48,12 +30,12 @@ $ docker run -i -v ~/run/mysqld:/var/run/mysqld -e MOUNT_MYSQL_SOCKET_TO_LOCALDI
 |----------|------|---------|------------|
 | DEBUG_COMPOSE_ENTRYPOINT | bool | `0` | Show shell commands executed during start.<br/>Value: `0` or `1` |
 | TIMEZONE | string | `UTC` | Set docker OS timezone as well as PHP timezone.<br/>(Example: `Europe/Berlin`) |
-| FORWARD_MYSQL_PORT_TO_LOCALHOST | bool | `0` | Forward a remote MySQL server port to listen on this docker on `127.0.0.1`<br/>Value: `0` or `1` |
+| FORWARD_MYSQL_PORT_TO_LOCALHOST | bool | `0` | Forward a remote MySQL server port to listen on this docker on `127.1.0.1`<br/>Value: `0` or `1` |
 | MYSQL_REMOTE_ADDR | string | `` | The remote IP address of the MySQL host from which to port-forward.<br/>This is required if $FORWARD_MYSQL_PORT_TO_LOCALHOST is turned on. |
 | MYSQL_REMOTE_PORT | int | `` | The remote port of the MySQL host from which to port-forward.<br/>This is required if $FORWARD_MYSQL_PORT_TO_LOCALHOST is turned on. |
-| MYSQL_LOCAL_PORT | int | `` | Forward the MySQL port to `127.0.0.1` to the specified local port.<br/>This is required if $FORWARD_MYSQL_PORT_TO_LOCALHOST is turned on. |
+| MYSQL_LOCAL_PORT | int | `` | Forward the MySQL port to `127.1.0.1` to the specified local port.<br/>This is required if $FORWARD_MYSQL_PORT_TO_LOCALHOST is turned on. |
 | MOUNT_MYSQL_SOCKET_TO_LOCALDISK | bool | `0` | Mount a remote MySQL server socket to local disk on this docker.<br/>Value: `0` or `1` |
-| MYSQL_SOCKET_PATH | string | `` | Full socket path where the MySQL socket has been mounted on this docker.<br/>This is recommended to adjust if $MOUNT_MYSQL_SOCKET_TO_LOCALDISK is turned on. |
+| MYSQL_SOCKET_PATH | string | `` | Full socket path where the MySQL socket has been mounted on this docker.<br/>This is recommended to adjust if $MOUNT_MYSQL_SOCKET_TO_LOCALDISK is turned on.<br/><br/>Example: `/tmp/mysql/mysqld.sock` |
 | PHP_XDEBUG_ENABLE | bool | `0` | Enable Xdebug.<br/>Value: `0` or `1` |
 | PHP_XDEBUG_REMOTE_PORT | int | `9000` | The port on your Host (where you run the IDE/editor to which xdebug should connect.) |
 | PHP_XDEBUG_REMOTE_HOST | string | `` | The IP address of your Host (where you run the IDE/editor to which xdebug should connect).<br/>This is required if $PHP_DEBUG_ENABLE is turned on. |
@@ -70,3 +52,58 @@ $ docker run -i -v ~/run/mysqld:/var/run/mysqld -e MOUNT_MYSQL_SOCKET_TO_LOCALDI
 | Docker | Description |
 |--------|-------------|
 | 9000   | PHP-FPM listening Port |
+
+## Usage
+
+It is recommended to always use the `$TIMEZONE` variable which will set php's `date.timezone`.
+
+**1. Provide FPM port to host**
+```bash
+$ docker run -i \
+    -p 127.1.0.1:9000:9000 \
+    -e TIMEZONE=Europe/Berlin \
+    -t cytopia/php-fpm-7.1
+```
+
+**2. Overwrite php.ini settings**
+
+Mount a PHP config directory from your host into the PHP docker in order to overwrite php.ini settings.
+```bash
+$ docker run -i \
+    -v ~/.etc/php.d:/etc/php-custom.d \
+    -p 127.1.0.1:9000:9000 \
+    -e TIMEZONE=Europe/Berlin \
+    -t cytopia/php-fpm-7.1
+```
+
+
+**3. MySQL connect via localhost (via socket mount)**
+
+Mount a MySQL socket from `~/run/mysqld` (on your host) into the PHP docker.
+By this, your PHP files inside the docker can use `localhost` to connect to a MySQL database.
+
+Note that the `$MYSQL_SOCKET_PATH` (path to file) should match with the folder you mount into the docker.
+```bash
+$ docker run -i \
+    -v ~/run/mysqld:/var/run/mysqld \
+    -p 127.1.0.1:9000:9000 \
+    -e TIMEZONE=Europe/Berlin \
+    -e MOUNT_MYSQL_SOCKET_TO_LOCALDISK=1 \
+    -e MYSQL_SOCKET_PATH=/var/run/mysqld/mysqld.sock \
+    -t cytopia/php-fpm-7.1
+```
+
+**4. MySQL connect via 127.1.0.1 (via port-forward)**
+
+Forward MySQL Port from `172.168.0.30` (or any other IP address/hostname) and Port `3306` to the PHP docker on `127.1.0.1:3306`. By this, your PHP files inside the docker can use `127.1.0.1` to connect to a MySQL database.
+```bash
+$ docker run -i \
+    -p 127.1.0.1:9000:9000 \
+    -e TIMEZONE=Europe/Berlin \
+    -e FORWARD_MYSQL_PORT_TO_LOCALHOST=1 \
+    -e MYSQL_REMOTE_ADDR=172.168.0.30 \
+    -e MYSQL_REMOTE_PORT=3306 \
+    -e MYSQL_LOCAL_PORT=3306 \
+    -t cytopia/php-fpm-7.1
+```
+
