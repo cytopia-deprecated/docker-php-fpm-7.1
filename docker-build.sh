@@ -32,3 +32,31 @@ run "sed -i'' 's/build-date=\".*\"/build-date=\"${DATE}\"/g' Dockerfile"
 
 # Build Docker
 run "docker build -t cytopia/${NAME} ."
+
+###
+### Retrieve information afterwards and Update README.md
+###
+docker run -d --name my_tmp_${NAME} -t cytopia/${NAME}
+PHP_MODULES="$( docker exec my_tmp_${NAME} php -m )"
+PHP_VERSION="$( docker exec my_tmp_${NAME} php -v )"
+docker stop "$(docker ps | grep "my_tmp_${NAME}" | awk '{print $1}')"
+docker rm "my_tmp_${NAME}"
+
+PHP_MODULES="$( echo "${PHP_MODULES}" | sed '/^\s*$/d' )"       # remove empty lines
+PHP_MODULES="$( echo "${PHP_MODULES}" | tr '\n' ',' )"          # newlines to commas
+PHP_MODULES="$( echo "${PHP_MODULES}" | sed 's/],/]\n\n/g' )"   # extra line for [foo]
+PHP_MODULES="$( echo "${PHP_MODULES}" | sed 's/,\[/\n\n\[/g' )" # extra line for [foo]
+PHP_MODULES="$( echo "${PHP_MODULES}" | sed 's/,$//g' )"        # remove trailing comma
+PHP_MODULES="$( echo "${PHP_MODULES}" | sed 's/,/, /g' )"       # Add space to comma
+PHP_MODULES="$( echo "${PHP_MODULES}" | sed 's/]/]**/g' )"      # Markdown bold
+PHP_MODULES="$( echo "${PHP_MODULES}" | sed 's/\[/**\[/g' )"    # Markdown bold
+
+echo "${PHP_MODULES}"
+
+sed -i'' '/##[[:space:]]Modules/q' README.md
+echo "" >> README.md
+echo "**[Version]**" >> README.md
+echo "" >> README.md
+echo "${PHP_VERSION}" >> README.md
+echo "" >> README.md
+echo "${PHP_MODULES}" >> README.md

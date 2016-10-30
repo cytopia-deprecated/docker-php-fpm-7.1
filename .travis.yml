@@ -18,12 +18,23 @@ env:
     - MY_VERSION="7.1"
     - MY_CONFIG_DIR="/tmp/my-custom-config"
     - MY_SOCKET_DIR="/tmp/my-socket-dir"
+    - MY_MAIL_DIR="/tmp/my-mail"
 
 
 ###
 ### Install
 ###
 install:
+
+  # Create overview section script
+  - echo "#!/bin/sh" > /tmp/section.sh
+  - echo " echo '===================================================================================================='" >> /tmp/section.sh
+  - echo " echo '===================================================================================================='" >> /tmp/section.sh
+  - echo " echo \"= \${1}\"" >> /tmp/section.sh
+  - echo " echo '===================================================================================================='" >> /tmp/section.sh
+  - echo " echo '===================================================================================================='" >> /tmp/section.sh
+  - chmod +x /tmp/section.sh
+
 
   # Show Docker version
   - docker version
@@ -42,6 +53,9 @@ install:
   - mkdir -p ${MY_SOCKET_DIR}
   - chmod 777 ${MY_SOCKET_DIR}
 
+  # Directory for mails
+  - mkdir -p ${MY_MAIL_DIR}
+  - chmod 777 ${MY_MAIL_DIR}
 
 
 
@@ -50,9 +64,10 @@ install:
 ###
 script:
 
-  ##
+  ################################################################################
   ## 01.) [a](DEBUG) Test plain docker
-  ##
+  ################################################################################
+  - /tmp/section.sh "01.) [a](DEBUG) Test plain docker"
   - docker run
       -e DEBUG_COMPOSE_ENTRYPOINT=1
       --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
@@ -78,6 +93,7 @@ script:
   ##
   ## 01.) [b](SILENT) Test plain docker
   ##
+  - /tmp/section.sh "01.) [b](SILENT) Test plain docker"
   - docker run
       --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
   - sleep 5
@@ -102,9 +118,10 @@ script:
 
 
 
-  ##
+  ################################################################################
   ## 02.) [a](DEBUG) Timezone
-  ##
+  ################################################################################
+  - /tmp/section.sh "02.) [a](DEBUG) Timezone"
   - docker run
       -e DEBUG_COMPOSE_ENTRYPOINT=1
       -e TIMEZONE=Europe/Berlin
@@ -120,6 +137,7 @@ script:
   ##
   ## 02.) [b](SILENT) Timezone
   ##
+  - /tmp/section.sh "02.) [b](SILENT) Timezone"
   - docker run
       -e TIMEZONE=Europe/Berlin
       --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
@@ -134,9 +152,10 @@ script:
 
 
 
-  ##
+  ################################################################################
   ## 03.) [a](DEBUG) Xdebug
-  ##
+  ################################################################################
+  - /tmp/section.sh "03.) [a](DEBUG) Xdebug"
   - docker run
       -e DEBUG_COMPOSE_ENTRYPOINT=1
       -e PHP_XDEBUG_ENABLE=1
@@ -156,6 +175,7 @@ script:
   ##
   ## 03.) [b](SILENT) Xdebug
   ##
+  - /tmp/section.sh "03.) [b](SILENT) Xdebug"
   - docker run
       -e PHP_XDEBUG_ENABLE=1
       -e PHP_XDEBUG_REMOTE_HOST=127.0.0.1
@@ -174,9 +194,10 @@ script:
 
 
 
-  ##
+  ################################################################################
   ## 04.) [a](DEBUG) Custom configuration
-  ##
+  ################################################################################
+  - /tmp/section.sh "04.) [a](DEBUG) Custom configuration"
   - printf "[PHP]\n%s\n" "upload_max_filesize = 2048M" > ${MY_CONFIG_DIR}/custom.ini
 
   - docker run
@@ -194,6 +215,7 @@ script:
   ##
   ## 04.) [b](SILENT) Custom configuration
   ##
+  - /tmp/section.sh "04.) [b](SILENT) Custom configuration"
   - printf "[PHP]\n%s\n" "upload_max_filesize = 2048M" > ${MY_CONFIG_DIR}/custom.ini
 
   - docker run
@@ -210,9 +232,10 @@ script:
 
 
 
-  ##
+  ################################################################################
   ## 05.) [a](DEBUG) Test MySQL 127.0.0.1 port-forwarding
-  ##
+  ################################################################################
+  - /tmp/section.sh "05.) [a](DEBUG) Test MySQL 127.0.0.1 port-forwarding"
   - docker run
       -e DEBUG_COMPOSE_ENTRYPOINT=1
       -e MYSQL_ROOT_PASSWORD=
@@ -244,6 +267,7 @@ script:
   ##
   ## 05.) [b](SILENT) Test MySQL 127.0.0.1 port-forwarding
   ##
+  - /tmp/section.sh "05.) [b](SILENT) Test MySQL 127.0.0.1 port-forwarding"
   - docker run
       -e MYSQL_ROOT_PASSWORD=
       --name mysql cytopia/mysql-5.5 &
@@ -273,9 +297,10 @@ script:
 
 
 
-  ##
+  ################################################################################
   ## 06.) [a](DEBUG) Test MySQL localhost socket mount
-  ##
+  ################################################################################
+  - /tmp/section.sh "06.) [a](DEBUG) Test MySQL localhost socket mount"
   - docker run
       -v ${MY_SOCKET_DIR}:/tmp/mysql-sock
       -e DEBUG_COMPOSE_ENTRYPOINT=1
@@ -305,6 +330,7 @@ script:
   ##
   ## 06.) [b](SILENT) Test MySQL localhost socket mount
   ##
+  - /tmp/section.sh "06.) [b](SILENT) Test MySQL localhost socket mount"
   - docker run
       -v ${MY_SOCKET_DIR}:/tmp/mysql-sock
       -e MYSQL_ROOT_PASSWORD=
@@ -328,4 +354,32 @@ script:
   - docker stop "$( docker ps | grep  "mysql" | awk '{print $1}' )"
   - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
   - docker rm "mysql"
+  - docker rm "${MY_DOCKER_NAME}"
+
+
+
+  ################################################################################
+  ## 07.) [a](DEBUG) Test Postfix mail delivery
+  ################################################################################
+  - /tmp/section.sh "07.) [a](DEBUG) Test Postfix mail delivery"
+  - docker run
+      -v ${MY_MAIL_DIR}:/var/mail
+      -e DEBUG_COMPOSE_ENTRYPOINT=1
+      -e ENABLE_MAIL=1
+      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
+  - sleep 15
+
+  - docker ps
+
+  # Test Emails
+  - ls -la ${MY_MAIL_DIR}/
+  - cat ${MY_MAIL_DIR}/mailtrap
+
+  - docker exec ${MY_DOCKER_NAME} php -r "mail('test@example.com', 'test-email', 'the message');"
+
+  - ls -la ${MY_MAIL_DIR}/
+  - cat ${MY_MAIL_DIR}/mailtrap
+  - grep -q 'test-email' ${MY_MAIL_DIR}/mailtrap
+
+  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
   - docker rm "${MY_DOCKER_NAME}"

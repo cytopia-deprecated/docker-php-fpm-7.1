@@ -314,6 +314,61 @@ fi
 
 
 ###
+### Allow for sending emails
+###
+if ! set | grep '^ENABLE_MAIL=' >/dev/null 2>&1; then
+	log "warn" "\$ENABLE_MAIL not set."
+	log "warn" "Disabling sending of emails."
+else
+	if [ "${ENABLE_MAIL}" = "1" ]; then
+
+		log "info" "Enabling sending of emails."
+
+		MAIL_USER="mailtrap"
+
+		##
+		## 1. User configuration
+		##
+
+		# Add user if it does not exist
+		if ! id -u "${MAIL_USER}" > /dev/null 2>&1; then
+			run "adduser ${MAIL_USER}"
+		fi
+
+		# Add Mail file if it does not exist
+		if [ ! -f "/var/mail/${MAIL_USER}" ]; then
+			run "touch /var/mail/${MAIL_USER}"
+		fi
+
+		# Set permissions to be readable by other users
+		run "chmod 664 /var/mail/${MAIL_USER}"
+
+
+
+		##
+		## 2. Postfix configuration
+		##
+		run "echo 'virtual_alias_maps = pcre:/etc/postfix/virtual' >> /etc/postfix/main.cf"
+		run "echo '/.*@.*/ ${MAIL_USER}' >> /etc/postfix/virtual"
+		run "newaliases"
+		run "postfix start"
+
+
+	elif [ "${ENABLE_MAIL}" = "0" ]; then
+		log "info" "Disabling sending of emails."
+
+	else
+		log "err" "Invalid value for \$ENABLE_MAIL"
+		log "err" "Only 1 (for on) or 0 (for off) are allowed"
+		exit 1
+	fi
+fi
+
+
+
+
+
+###
 ### Start
 ###
 log "info" "Starting $(php-fpm -v 2>&1 | head -1)"

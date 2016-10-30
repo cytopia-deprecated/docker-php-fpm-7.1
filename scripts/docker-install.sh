@@ -111,6 +111,7 @@ run "yum -y install \
 	php-xml \
 	php-xmlrpc \
 	\
+	php-pecl-apcu \
 	php-pecl-imagick \
 	php-pecl-uploadprogress \
 	php-pecl-xdebug \
@@ -182,3 +183,4 @@ run "yum -y install socat"
 ###
 print_headline "10. Cleanup unecessary packages"
 run "yum -y autoremove"
+run "yum clean all"
