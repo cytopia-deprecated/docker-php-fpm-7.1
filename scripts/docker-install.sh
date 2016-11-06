@@ -103,6 +103,7 @@ run "yum -y install \
 	php-mysqli \
 	php-mysqlnd \
 	php-opcache \
+	php-pear \
 	php-pdo \
 	php-pspell \
 	php-recode \
@@ -167,6 +168,8 @@ run "sed -i'' 's|^;catch_workers_output[[:space:]]*=.*$|catch_workers_output = y
 run "sed -i'' 's|^;clear_env[[:space:]]*=.*$|clear_env = no|g' ${PHP_FPM_POOL_CONF}"
 # Adding default listening directive
 run "sed -i'' 's|^listen[[:space:]]*=.*$|listen = 0.0.0.0:9000|g' ${PHP_FPM_POOL_CONF}"
+# Display errors
+run "sed -i'' 's|^.*php_flag\[display_errors\].*$|php_flag[display_errors] = on|g' ${PHP_FPM_POOL_CONF}"
 
 
 
