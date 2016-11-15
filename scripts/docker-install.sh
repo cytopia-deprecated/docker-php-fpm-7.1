@@ -105,6 +105,7 @@ run "yum -y install \
 	php-opcache \
 	php-pear \
 	php-pdo \
+	php-pgsql \
 	php-pspell \
 	php-recode \
 	php-soap \

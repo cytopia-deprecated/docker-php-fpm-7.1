@@ -125,14 +125,14 @@ $ docker run -i \
 
 **[Version]**
 
-PHP 7.1.0RC5 (cli) (built: Oct 26 2016 09:03:56) ( NTS )
+PHP 7.1.0RC6 (cli) (built: Nov  9 2016 09:51:59) ( NTS )
 Copyright (c) 1997-2016 The PHP Group
 Zend Engine v3.1.0-dev, Copyright (c) 1998-2016 Zend Technologies
-    with Zend OPcache v7.1.0RC5, Copyright (c) 1999-2016, by Zend Technologies
+    with Zend OPcache v7.1.0RC6, Copyright (c) 1999-2016, by Zend Technologies
 
 **[PHP Modules]**
 
-apc, apcu, bcmath, bz2, calendar, Core, ctype, curl, date, dom, exif, fileinfo, filter, ftp, gd, gettext, gmp, hash, iconv, imagick, imap, intl, json, ldap, libxml, mbstring, mcrypt, mysqli, mysqlnd, openssl, pcntl, pcre, PDO, pdo_mysql, pdo_sqlite, Phar, posix, pspell, readline, recode, Reflection, session, shmop, SimpleXML, soap, sockets, SPL, sqlite3, standard, sysvmsg, sysvsem, sysvshm, tidy, tokenizer, uploadprogress, wddx, xml, xmlreader, xmlrpc, xmlwriter, xsl, Zend OPcache, zlib
+apc, apcu, bcmath, bz2, calendar, Core, ctype, curl, date, dom, exif, fileinfo, filter, ftp, gd, gettext, gmp, hash, iconv, imagick, imap, intl, json, ldap, libxml, mbstring, mcrypt, mysqli, mysqlnd, openssl, pcntl, pcre, PDO, pdo_mysql, pdo_pgsql, pdo_sqlite, pgsql, Phar, posix, pspell, readline, recode, Reflection, session, shmop, SimpleXML, soap, sockets, SPL, sqlite3, standard, sysvmsg, sysvsem, sysvshm, tidy, tokenizer, uploadprogress, wddx, xml, xmlreader, xmlrpc, xmlwriter, xsl, Zend OPcache, zlib
 
 **[Zend Modules]**
 
