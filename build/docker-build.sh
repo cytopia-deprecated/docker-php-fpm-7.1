@@ -46,6 +46,7 @@ DATE="$( date '+%Y-%m-%d' )"
 ###
 
 # Update build date
+run "sed -i'' 's/<small>\*\*Latest\sbuild.*/<small>**Latest build:** ${DATE}<\/small>/g' ${CWD}/README.md"
 run "sed -i'' 's/build-date=\".*\"/build-date=\"${DATE}\"/g' ${CWD}/Dockerfile"
 
 # Build Docker
