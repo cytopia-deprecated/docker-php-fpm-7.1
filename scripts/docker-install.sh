@@ -108,6 +108,7 @@ run "yum -y install \
 	php-pgsql \
 	php-pspell \
 	php-recode \
+	php-redis \
 	php-soap \
 	php-tidy \
 	php-xml \
