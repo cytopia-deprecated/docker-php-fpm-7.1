@@ -125,10 +125,10 @@ $ docker run -i \
 
 **[Version]**
 
-PHP 7.1.0RC6 (cli) (built: Nov  9 2016 09:51:59) ( NTS )
-Copyright (c) 1997-2016 The PHP Group
-Zend Engine v3.1.0-dev, Copyright (c) 1998-2016 Zend Technologies
-    with Zend OPcache v7.1.0RC6, Copyright (c) 1999-2016, by Zend Technologies
+PHP 7.1.4 (cli) (built: Apr 11 2017 19:36:58) ( NTS )
+Copyright (c) 1997-2017 The PHP Group
+Zend Engine v3.1.0, Copyright (c) 1998-2017 Zend Technologies
+    with Zend OPcache v7.1.4, Copyright (c) 1999-2017, by Zend Technologies
 
 **[PHP Modules]**
 
