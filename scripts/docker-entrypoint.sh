@@ -91,6 +91,122 @@ fi
 # MAIN ENTRY POINT
 ################################################################################
 
+
+
+###
+### Use docker logs [error]?
+###
+
+if ! set | grep '^DOCKER_LOGS_ERROR=' >/dev/null 2>&1; then
+	log "warn" "\$DOCKER_LOGS_ERROR not set."
+	log "warn" "Logging errors to file inside container"
+else
+	# ---- 1/3 Enabled ----
+	if [ "${DOCKER_LOGS_ERROR}" = "1" ]; then
+		log "info" "Logging errors to docker logs"
+
+		run "ln -sf /proc/self/fd/2 ${PHP_FPM_LOG_ERR}"
+		run "ln -sf /proc/self/fd/2 ${PHP_FPM_POOL_LOG_ERR}"
+		run "ln -sf /proc/self/fd/2 ${PHP_FPM_POOL_LOG_SLOW}"
+
+	# ---- 2/3 Disabled
+	elif [ "${DOCKER_LOGS_ERROR}" = "0" ]; then
+		log "info" "Not logging errors to docker logs, using file inside container"
+
+		if [ -L "${PHP_FPM_LOG_ERR}" ]; then
+			run "rm -f ${PHP_FPM_LOG_ERR}"
+			run "touch ${PHP_FPM_LOG_ERR}"
+			run "chmod 666 ${PHP_FPM_LOG_ERR}"
+		fi
+		if [ -L "${PHP_FPM_POOL_LOG_ERR}" ]; then
+			run "rm -f ${PHP_FPM_POOL_LOG_ERR}"
+			run "touch ${PHP_FPM_POOL_LOG_ERR}"
+			run "chmod 666 ${PHP_FPM_POOL_LOG_ERR}"
+		fi
+		if [ -L "${PHP_FPM_POOL_LOG_SLOW}" ]; then
+			run "rm -f ${PHP_FPM_POOL_LOG_SLOW}"
+			run "touch ${PHP_FPM_POOL_LOG_SLOW}"
+			run "chmod 666 ${PHP_FPM_POOL_LOG_SLOW}"
+		fi
+
+	# ---- 3/3 Wrong value ----
+	else
+		log "err" "Invalid value for \$DOCKER_LOGS_ERROR: ${DOCKER_LOGS_ERROR}"
+		log "err" "Must be '1' (for On) or '0' (for Off)"
+		exit 1
+	fi
+fi
+
+
+
+###
+### Use docker logs [access]?
+###
+
+if ! set | grep '^DOCKER_LOGS_ACCESS=' >/dev/null 2>&1; then
+	log "warn" "\$DOCKER_LOGS_ACCESS not set."
+	log "warn" "Logging access to file inside container"
+else
+	# ---- 1/3 Enabled ----
+	if [ "${DOCKER_LOGS_ACCESS}" = "1" ]; then
+		log "info" "Logging access to docker logs"
+
+		run "ln -sf /proc/self/fd/2 ${PHP_FPM_POOL_LOG_ACC}"
+
+	# ---- 2/3 Disabled
+	elif [ "${DOCKER_LOGS_ACCESS }" = "0" ]; then
+		log "info" "Not logging access to docker logs, using file inside container"
+
+		if [ -L "${PHP_POOL_LOG_ACC}" ]; then
+			run "rm -f ${PHP_POOL_LOG_ACC}"
+			run "touch ${PHP_POOL_LOG_ACC}"
+			run "chmod 666 ${PHP_POOL_LOG_ACC}"
+		fi
+
+	# ---- 3/3 Wrong value ----
+	else
+		log "err" "Invalid value for \$DOCKER_LOGS_ACCESS: ${DOCKER_LOGS_ACCESS}"
+		log "err" "Must be '1' (for On) or '0' (for Off)"
+		exit 1
+	fi
+fi
+
+
+
+###
+### Use docker logs [xdebug]?
+###
+
+if ! set | grep '^DOCKER_LOGS_XDEBUG=' >/dev/null 2>&1; then
+	log "warn" "\$DOCKER_LOGS_XDEBUGnot set."
+	log "warn" "Logging xdebug to file inside container"
+else
+	# ---- 1/3 Enabled ----
+	if [ "${DOCKER_LOGS_XDEBUG}" = "1" ]; then
+		log "info" "Logging xdebug to docker logs"
+
+		run "ln -sf /proc/self/fd/2 ${PHP_LOG_XDEBUG}"
+
+	# ---- 2/3 Disabled
+	elif [ "${DOCKER_LOGS_XDEBUG}" = "0" ]; then
+		log "info" "Not logging xdebug to docker logs, using file inside container"
+
+		if [ -L "${DOCKER_LOGS_XDEBUG}" ]; then
+			run "rm -f ${DOCKER_LOGS_XDEBUG}"
+			run "touch ${DOCKER_LOGS_XDEBUG}"
+			run "chmod 666 ${DOCKER_LOGS_XDEBUG}"
+		fi
+
+	# ---- 3/3 Wrong value ----
+	else
+		log "err" "Invalid value for \$DOCKER_LOGS_XDEBUG: ${DOCKER_LOGS_XDEBUG}"
+		log "err" "Must be '1' (for On) or '0' (for Off)"
+		exit 1
+	fi
+fi
+
+
+
 ###
 ### Adjust timezone
 ###
@@ -188,6 +304,7 @@ else
 		log "info" "Setting PHP: xdebug.remote_port=${PHP_XDEBUG_REMOTE_PORT}"
 		run "echo 'xdebug.remote_port=${PHP_XDEBUG_REMOTE_PORT}' >> ${XDEBUG_CONFIG}"
 
+		# shellcheck disable=SC2153
 		log "info" "Setting PHP: xdebug.remote_host=${PHP_XDEBUG_REMOTE_HOST}"
 		run "echo 'xdebug.remote_host=${PHP_XDEBUG_REMOTE_HOST}' >> ${XDEBUG_CONFIG}"
 
@@ -367,10 +484,16 @@ fi
 
 
 
+###
+### Fix logdir/file
+###
+run "chmod 0777 ${PHP_FPM_LOG_DIR}"
+run "find ${PHP_FPM_LOG_DIR} -type f -exec chmod 0666 {} \;"
+
 
 
 ###
 ### Start
 ###
 log "info" "Starting $(php-fpm -v 2>&1 | head -1)"
-run "/usr/sbin/php-fpm -F" "1"
+exec /usr/sbin/php-fpm --force-stderr
