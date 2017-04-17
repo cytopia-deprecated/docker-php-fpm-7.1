@@ -348,6 +348,7 @@ else
 		##
 		## 2. Postfix configuration
 		##
+		run "sed -i'' 's/^inet_protocols.*/inet_protocols = ipv4/g' /etc/postfix/main.cf"
 		run "echo 'virtual_alias_maps = pcre:/etc/postfix/virtual' >> /etc/postfix/main.cf"
 		run "echo '/.*@.*/ ${MAIL_USER}' >> /etc/postfix/virtual"
 		run "newaliases"
