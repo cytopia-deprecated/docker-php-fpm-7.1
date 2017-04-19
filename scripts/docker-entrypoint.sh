@@ -458,7 +458,6 @@ else
 		fi
 
 		# Open mail user permissions
-		run "chown ${MY_USER}:${MY_GROUP} /var/mail/${MAIL_USER}"
 		run "chmod 0666 /var/mail/${MAIL_USER}"
 
 
