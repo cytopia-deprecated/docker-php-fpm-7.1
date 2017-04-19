@@ -120,9 +120,9 @@ Once you `$ENABLE_MAIL=1`, all mails sent via any of your PHP applications no ma
 ```bash
 $ docker run -i \
     -p 127.0.0.1:9000:9000 \
-	-v /tmp/mail:/var/mail \
+    -v /tmp/mail:/var/mail \
     -e TIMEZONE=Europe/Berlin \
-	-e ENABLE_MAIL=1 \
+    -e ENABLE_MAIL=1 \
     -t cytopia/php-fpm-7.1
 ```
 
