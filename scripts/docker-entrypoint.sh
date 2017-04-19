@@ -116,17 +116,17 @@ else
 		if [ -L "${PHP_FPM_LOG_ERR}" ]; then
 			run "rm -f ${PHP_FPM_LOG_ERR}"
 			run "touch ${PHP_FPM_LOG_ERR}"
-			run "chmod 666 ${PHP_FPM_LOG_ERR}"
+			run "chmod 0666 ${PHP_FPM_LOG_ERR}"
 		fi
 		if [ -L "${PHP_FPM_POOL_LOG_ERR}" ]; then
 			run "rm -f ${PHP_FPM_POOL_LOG_ERR}"
 			run "touch ${PHP_FPM_POOL_LOG_ERR}"
-			run "chmod 666 ${PHP_FPM_POOL_LOG_ERR}"
+			run "chmod 0666 ${PHP_FPM_POOL_LOG_ERR}"
 		fi
 		if [ -L "${PHP_FPM_POOL_LOG_SLOW}" ]; then
 			run "rm -f ${PHP_FPM_POOL_LOG_SLOW}"
 			run "touch ${PHP_FPM_POOL_LOG_SLOW}"
-			run "chmod 666 ${PHP_FPM_POOL_LOG_SLOW}"
+			run "chmod 0666 ${PHP_FPM_POOL_LOG_SLOW}"
 		fi
 
 	# ---- 3/3 Wrong value ----
@@ -160,7 +160,7 @@ else
 		if [ -L "${PHP_POOL_LOG_ACC}" ]; then
 			run "rm -f ${PHP_POOL_LOG_ACC}"
 			run "touch ${PHP_POOL_LOG_ACC}"
-			run "chmod 666 ${PHP_POOL_LOG_ACC}"
+			run "chmod 0666 ${PHP_POOL_LOG_ACC}"
 		fi
 
 	# ---- 3/3 Wrong value ----
@@ -191,10 +191,10 @@ else
 	elif [ "${DOCKER_LOGS_XDEBUG}" = "0" ]; then
 		log "info" "Not logging xdebug to docker logs, using file inside container"
 
-		if [ -L "${DOCKER_LOGS_XDEBUG}" ]; then
-			run "rm -f ${DOCKER_LOGS_XDEBUG}"
-			run "touch ${DOCKER_LOGS_XDEBUG}"
-			run "chmod 666 ${DOCKER_LOGS_XDEBUG}"
+		if [ -L "${PHP_LOG_XDEBUG}" ]; then
+			run "rm -f ${PHP_LOG_XDEBUG}"
+			run "touch ${PHP_LOG_XDEBUG}"
+			run "chmod 0666 ${PHP_LOG_XDEBUG}"
 		fi
 
 	# ---- 3/3 Wrong value ----
@@ -458,7 +458,7 @@ else
 		fi
 
 		# Set permissions to be readable by other users
-		run "chmod 664 /var/mail/${MAIL_USER}"
+		run "chmod 0664 /var/mail/${MAIL_USER}"
 
 
 
