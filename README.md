@@ -31,7 +31,7 @@
 | Variable | Type | Default |Description |
 |----------|------|---------|------------|
 | DEBUG_COMPOSE_ENTRYPOINT | bool | `0` | Show shell commands executed during start.<br/>Value: `0` or `1` |
-| DOCKER_LOGS_ERROR | bool | `0` | Log errors to `docker logs` instead of file inside container.<br/>Value: `0` or `1` |
+| DOCKER_LOGS_ERROR | bool | `0` | Log errors to `docker logs` instead of file inside container.<br/>Value: `0` or `1`<br/>**Note:** When using this container with a webserver and set to `1` (log to `docker logs`), php errors will strangely be redirected to the webservers error log. So also make sure to send the webserver error log to `docker logs`.|
 | DOCKER_LOGS_ACCESS | bool | `0` | Log access to `docker logs` instead of file inside container.<br/>Value: `0` or `1` |
 | DOCKER_LOGS_XDEBUG | bool | `0` | Log php xdebug to `docker logs` instead of file inside container.<br/>Value: `0` or `1` |
 | TIMEZONE | string | `UTC` | Set docker OS timezone as well as PHP timezone.<br/>(Example: `Europe/Berlin`) |
