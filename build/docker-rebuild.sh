@@ -57,11 +57,10 @@ run "docker build --no-cache -t cytopia/${NAME} ${CWD}"
 ### Retrieve information afterwards and Update README.md
 ###
 
-docker run -d --name my_tmp_${NAME} -t cytopia/${NAME}
+docker run -d --rm --name my_tmp_${NAME} -t cytopia/${NAME}
 PHP_MODULES="$( docker exec my_tmp_${NAME} php -m )"
 PHP_VERSION="$( docker exec my_tmp_${NAME} php -v | sed 's/\s*$//g' )"
 docker stop "$(docker ps | grep "my_tmp_${NAME}" | awk '{print $1}')"
-docker rm "my_tmp_${NAME}"
 
 PHP_MODULES="$( echo "${PHP_MODULES}" | sed '/^\s*$/d' )"       # remove empty lines
 PHP_MODULES="$( echo "${PHP_MODULES}" | tr '\n' ',' )"          # newlines to commas
