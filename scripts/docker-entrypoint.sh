@@ -241,7 +241,7 @@ log "info" "Docker date set to: $(date)"
 
 log "info" "Adding custom configuration files:"
 run "find ${PHP_CUST_CONF_DIR} -type f -iname \"*.ini\" -exec echo \"Copying: {} to ${PHP_CONF_DIR}/\" \; -exec cp \"{}\" ${PHP_CONF_DIR}/ \;"
-
+run "find ${PHP_CONF_DIR} -name '*.ini' -exec chmod 0644 {} \;"
 
 
 ###
