@@ -457,9 +457,9 @@ else
 			run "touch /var/mail/${MAIL_USER}"
 		fi
 
-		# Set permissions to be readable by other users
-		run "chmod 0664 /var/mail/${MAIL_USER}"
-
+		# Fix mail user permissions after mount
+		run "chmod 0666 /var/mail/${MAIL_USER}"
+		run "chown ${MAIL_USER}:${MAIL_USER} /var/mail/${MAIL_USER}"
 
 
 		##
