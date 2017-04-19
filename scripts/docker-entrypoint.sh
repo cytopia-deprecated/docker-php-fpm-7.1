@@ -191,10 +191,10 @@ else
 	elif [ "${DOCKER_LOGS_XDEBUG}" = "0" ]; then
 		log "info" "Not logging xdebug to docker logs, using file inside container"
 
-		if [ -L "${DOCKER_LOGS_XDEBUG}" ]; then
-			run "rm -f ${DOCKER_LOGS_XDEBUG}"
-			run "touch ${DOCKER_LOGS_XDEBUG}"
-			run "chmod 666 ${DOCKER_LOGS_XDEBUG}"
+		if [ -L "${PHP_LOG_XDEBUG}" ]; then
+			run "rm -f ${PHP_LOG_XDEBUG}"
+			run "touch ${PHP_LOG_XDEBUG}"
+			run "chmod 666 ${PHP_LOG_XDEBUG}"
 		fi
 
 	# ---- 3/3 Wrong value ----
