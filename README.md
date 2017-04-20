@@ -6,7 +6,7 @@
 
 [![cytopia/php-fpm-7.1](http://dockeri.co/image/cytopia/php-fpm-7.1)](https://hub.docker.com/r/cytopia/php-fpm-7.1/)
 
-**[php-fpm 5.4](https://github.com/cytopia/docker-php-fpm-5.4) | [php-fpm 5.5](https://github.com/cytopia/docker-php-fpm-5.5) | [php-fpm 5.6](https://github.com/cytopia/docker-php-fpm-5.6) | [php-fpm 7.0](https://github.com/cytopia/docker-php-fpm-7.0) | php-fpm 7.1**
+**[php-fpm 5.4](https://github.com/cytopia/docker-php-fpm-5.4) | [php-fpm 5.5](https://github.com/cytopia/docker-php-fpm-5.5) | [php-fpm 5.6](https://github.com/cytopia/docker-php-fpm-5.6) | [php-fpm 7.0](https://github.com/cytopia/docker-php-fpm-7.0) | php-fpm 7.1 | [HHVM latest](https://github.com/cytopia/docker-hhvm-latest)**
 
 ----
 
