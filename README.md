@@ -1,6 +1,6 @@
 # PHP-FPM 7.1 Docker
 
-<small>**Latest build:** 2017-04-19</small>
+<small>**Latest build:** 2017-05-16</small>
 
 [![Build Status](https://travis-ci.org/cytopia/docker-php-fpm-7.1.svg?branch=master)](https://travis-ci.org/cytopia/docker-php-fpm-7.1) [![](https://images.microbadger.com/badges/version/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/image/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/license/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1")
 
@@ -130,15 +130,26 @@ $ docker run -i \
 
 **[Version]**
 
-PHP 7.1.4 (cli) (built: Apr 11 2017 19:36:58) ( NTS )
+PHP 7.1.5 (cli) (built: May  9 2017 18:30:17) ( NTS )
 Copyright (c) 1997-2017 The PHP Group
 Zend Engine v3.1.0, Copyright (c) 1998-2017 Zend Technologies
-    with Zend OPcache v7.1.4, Copyright (c) 1999-2017, by Zend Technologies
+    with Zend OPcache v7.1.5, Copyright (c) 1999-2017, by Zend Technologies
 
 **[PHP Modules]**
 
-apc, apcu, bcmath, bz2, calendar, Core, ctype, curl, date, dom, exif, fileinfo, filter, ftp, gd, gettext, gmp, hash, iconv, igbinary, imagick, imap, intl, json, ldap, libxml, mbstring, mcrypt, mysqli, mysqlnd, openssl, pcntl, pcre, PDO, pdo_mysql, pdo_pgsql, pdo_sqlite, pgsql, phalcon, Phar, posix, pspell, readline, recode, redis, Reflection, session, shmop, SimpleXML, soap, sockets, SPL, sqlite3, standard, sysvmsg, sysvsem, sysvshm, tidy, tokenizer, uploadprogress, wddx, xml, xmlreader, xmlrpc, xmlwriter, xsl, Zend OPcache, zlib
+apc, apcu, bcmath, bz2, calendar, Core, ctype, curl, date, dom, exif, fileinfo, filter, ftp, gd, gettext, gmp, hash, iconv, igbinary, imagick, imap, intl, json, ldap, libxml, mbstring, mcrypt, memcache, memcached, msgpack, mysqli, mysqlnd, openssl, pcntl, pcre, PDO, pdo_mysql, pdo_pgsql, pdo_sqlite, pgsql, phalcon, Phar, posix, pspell, readline, recode, redis, Reflection, session, shmop, SimpleXML, soap, sockets, SPL, sqlite3, standard, sysvmsg, sysvsem, sysvshm, tidy, tokenizer, uploadprogress, wddx, xdebug, xml, xmlreader, xmlrpc, xmlwriter, xsl, Zend OPcache, zip, zlib
 
 **[Zend Modules]**
 
-Zend OPcache
+Xdebug, Zend OPcache
+
+**[Tools]**
+
+| tool           | version |
+|----------------|---------|
+| composer       | 1.4.1 |
+| drush          | 8.1.11 |
+| drupal-console | 1.0.0-rc19 |
+| git            | 1.8.3.1 |
+| node           | 6.10.2 |
+| npm            | 3.10.10 |

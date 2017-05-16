@@ -6,9 +6,6 @@
 PHP_FPM_POOL_CONF="/etc/php-fpm.d/www.conf"
 PHP_FPM_CONF="/etc/php-fpm.conf"
 
-# Custom php directory to look for *.ini files
-PHP_CUST_CONF_DIR="/etc/php-custom.d"
-
 
 ###
 ### Functions
@@ -59,12 +56,6 @@ grep -q '^variables_order = EGPCS$' /etc/php.ini
 if [ "$( grep -c '^variables_order[[:space:]]*=' /etc/php.ini )" != "1" ]; then
 	exit 1
 fi
-
-# Add custom php configuration directory
-if [ ! -d "${PHP_CUST_CONF_DIR}" ]; then
-	run "mkdir -p ${PHP_CUST_CONF_DIR}"
-fi
-run "chmod 777 ${PHP_CUST_CONF_DIR}"
 
 
 
@@ -314,5 +305,6 @@ fi
 if [ ! -f "${PHP_FPM_POOL_LOG_SLOW}" ]; then
 	touch "${PHP_FPM_POOL_LOG_SLOW}"
 fi
-run "chmod 0777 ${PHP_FPM_LOG_DIR}"
-run "chmod -R 0666 ${PHP_FPM_LOG_DIR}/*"
+run "chmod 0755 ${PHP_FPM_LOG_DIR}"
+run "chmod -R 0644 ${PHP_FPM_LOG_DIR}/*"
+run "chown -R ${MY_USER}:${MY_GROUP} ${PHP_FPM_LOG_DIR}"

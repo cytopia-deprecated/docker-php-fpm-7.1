@@ -5,12 +5,12 @@
 ###
 DEBUG_COMMANDS=0
 
-# If $PHP_CUST_CONF_DIR is mounted from the
-# host, all *.ini files from $PHP_CUST_CONF_DIR
+# If $MY_CFG_DIR_PHP_CUSTOM is mounted from the
+# host, all *.ini files from $MY_CFG_DIR_PHP_CUSTOM
 # will be copied to $PHP_CONF_DIR
-PHP_CONF_DIR="/etc/php.d"				# Default php config dir
-PHP_CUST_CONF_DIR="/etc/php-custom.d"	# Custom php directory to look for *.ini files
+PHP_CONF_DIR="/etc/php.d"
 
+# Default Xdebug remote port
 PHP_XDEBUG_DEFAULT_PORT="9000"
 
 
@@ -68,12 +68,65 @@ log() {
 # Test if argument is an integer.
 #
 # @param  mixed
-# @return integer	0: is number | 1: not a number
-isint(){
-	printf "%d" "${1}" >/dev/null 2>&1 && return 0 || return 1;
+# @return integer	0: is int | 1: not an int
+isint() {
+	echo "${1}" | grep -Eq '^([0-9]|[1-9][0-9]*)$'
 }
 
+isip() {
+	# IP is not in correct format
+	if ! echo "${1}" | grep -Eq '^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})$'; then
+		return 1
+	fi
 
+	# Get each octet
+	o1="$( echo "${1}" | awk -F'.' '{print $1}' )"
+	o2="$( echo "${1}" | awk -F'.' '{print $2}' )"
+	o3="$( echo "${1}" | awk -F'.' '{print $3}' )"
+	o4="$( echo "${1}" | awk -F'.' '{print $4}' )"
+
+	# Cannot start with 0 and all must be below 256
+	if [ "${o1}" -lt "1" ] || \
+		[ "${o1}" -gt "255" ] || \
+		[ "${o2}" -gt "255" ] || \
+		[ "${o3}" -gt "255" ] || \
+		[ "${o4}" -gt "255" ]; then
+		return 1
+	fi
+
+	# All tests passed
+	return 0
+}
+ishostname() {
+	# Does not have correct character class
+	if ! echo "${1}" | grep -Eq '^[-.0-9a-zA-Z]+$'; then
+		return 1
+	fi
+
+	# first and last character
+	f_char="$( echo "${1}" | cut -c1-1 )"
+	l_char="$( echo "${1}" | sed -e 's/.*\(.\)$/\1/' )"
+
+	# Dot at beginning or end
+	if [ "${f_char}" = "." ] || [ "${l_char}" = "." ]; then
+		return 1
+	fi
+	# Dash at beginning or end
+	if [ "${f_char}" = "-" ] || [ "${l_char}" = "-" ]; then
+		return 1
+	fi
+	# Multiple dots next to each other
+	if echo "${1}" | grep -Eq '[.]{2,}'; then
+		return 1
+	fi
+	# Dash next to dot
+	if echo "${1}" | grep -Eq '(\.-)|(-\.)'; then
+		return 1
+	fi
+
+	# All tests passed
+	return 0
+}
 
 
 ################################################################################
@@ -87,54 +140,102 @@ if set | grep '^DEBUG_COMPOSE_ENTRYPOINT='  >/dev/null 2>&1; then
 fi
 
 
+
 ################################################################################
 # MAIN ENTRY POINT
 ################################################################################
+
+###
+### Change UID
+###
+if ! set | grep '^NEW_UID=' >/dev/null 2>&1; then
+	log "warn" "\$NEW_UID not set"
+	log "warn" "Keeping user '${MY_USER}' with default uid: ${MY_UID}"
+else
+	if ! isint "${NEW_UID}"; then
+		log "err" "\$NEW_UID is not an integer: '${NEW_UID}'"
+		exit 1
+	else
+		log "info" "Changing user '${MY_USER}' uid to: ${NEW_UID}"
+		run "usermod -u ${NEW_UID} ${MY_USER}"
+	fi
+fi
+
+
+
+###
+### Change GID
+###
+if ! set | grep '^NEW_GID=' >/dev/null 2>&1; then
+	log "warn" "\$NEW_GID not set"
+	log "warn" "Keeping group '${MY_GROUP}' with default gid: ${MY_GID}"
+else
+	if ! isint "${NEW_GID}"; then
+		log "err" "\$NEW_GID is not an integer: '${NEW_GID}'"
+		exit 1
+	else
+		log "info" "Changing group '${MY_GROUP}' gid to: ${NEW_GID}"
+		run "groupmod -g ${NEW_GID} ${MY_GROUP}"
+	fi
+fi
 
 
 
 ###
 ### Use docker logs [error]?
 ###
+if ! set | grep '^DOCKER_LOGS_ERROR=' >/dev/null 2>&1 || [ "${DOCKER_LOGS_ERROR}" != "1" ]; then
 
-if ! set | grep '^DOCKER_LOGS_ERROR=' >/dev/null 2>&1; then
-	log "warn" "\$DOCKER_LOGS_ERROR not set."
-	log "warn" "Logging errors to file inside container"
-else
-	# ---- 1/3 Enabled ----
-	if [ "${DOCKER_LOGS_ERROR}" = "1" ]; then
-		log "info" "Logging errors to docker logs"
-
-		run "ln -sf /proc/self/fd/2 ${PHP_FPM_LOG_ERR}"
-		run "ln -sf /proc/self/fd/2 ${PHP_FPM_POOL_LOG_ERR}"
-		run "ln -sf /proc/self/fd/2 ${PHP_FPM_POOL_LOG_SLOW}"
-
-	# ---- 2/3 Disabled
+	# Why was it not enabled?
+	if ! set | grep '^DOCKER_LOGS_ERROR=' >/dev/null 2>&1; then
+		log "warn" "\$DOCKER_LOGS_ERROR not set."
+		log "warn" "Not logging errors to docker logs, using file inside container"
 	elif [ "${DOCKER_LOGS_ERROR}" = "0" ]; then
 		log "info" "Not logging errors to docker logs, using file inside container"
-
-		if [ -L "${PHP_FPM_LOG_ERR}" ]; then
-			run "rm -f ${PHP_FPM_LOG_ERR}"
-			run "touch ${PHP_FPM_LOG_ERR}"
-			run "chmod 0666 ${PHP_FPM_LOG_ERR}"
-		fi
-		if [ -L "${PHP_FPM_POOL_LOG_ERR}" ]; then
-			run "rm -f ${PHP_FPM_POOL_LOG_ERR}"
-			run "touch ${PHP_FPM_POOL_LOG_ERR}"
-			run "chmod 0666 ${PHP_FPM_POOL_LOG_ERR}"
-		fi
-		if [ -L "${PHP_FPM_POOL_LOG_SLOW}" ]; then
-			run "rm -f ${PHP_FPM_POOL_LOG_SLOW}"
-			run "touch ${PHP_FPM_POOL_LOG_SLOW}"
-			run "chmod 0666 ${PHP_FPM_POOL_LOG_SLOW}"
-		fi
-
-	# ---- 3/3 Wrong value ----
 	else
 		log "err" "Invalid value for \$DOCKER_LOGS_ERROR: ${DOCKER_LOGS_ERROR}"
 		log "err" "Must be '1' (for On) or '0' (for Off)"
 		exit 1
 	fi
+
+	# Delete left-over symlinks from previous run (if docker-logs was enabled)
+	if [ -L "${MY_LOG_FILE_ERR}" ]; then
+		run "rm -f ${MY_LOG_FILE_ERR}"
+	fi
+	if [ -L "${MY_LOG_FILE_POOL_ERR}" ]; then
+		run "rm -f ${MY_LOG_FILE_POOL_ERR}"
+	fi
+	if [ -L "${MY_LOG_FILE_POOL_SLOW}" ]; then
+		run "rm -f ${MY_LOG_FILE_POOL_SLOW}"
+	fi
+
+	# Create files if not exists
+	if [ ! -f "${MY_LOG_FILE_ERR}" ]; then
+		run "touch ${MY_LOG_FILE_ERR}"
+	fi
+	if [ ! -f "${MY_LOG_FILE_POOL_ERR}" ]; then
+		run "touch ${MY_LOG_FILE_POOL_ERR}"
+	fi
+	if [ ! -f "${MY_LOG_FILE_POOL_SLOW}" ]; then
+		run "touch ${MY_LOG_FILE_POOL_SLOW}"
+	fi
+
+	# Fix permissions
+	run "chmod 0664 ${MY_LOG_FILE_ERR}"
+	run "chmod 0664 ${MY_LOG_FILE_POOL_ERR}"
+	run "chmod 0664 ${MY_LOG_FILE_POOL_SLOW}"
+	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_ERR}"
+	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_POOL_ERR}"
+	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_POOL_SLOW}"
+
+elif [ "${DOCKER_LOGS_ERROR}" = "1" ]; then
+	log "info" "Logging errors to docker logs"
+	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_ERR}"
+	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_POOL_ERR}"
+	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_POOL_SLOW}"
+else
+	log "err" "Invalid choice for \$DOCKER_LOGS_ERROR"
+	exit 1
 fi
 
 
@@ -142,33 +243,40 @@ fi
 ###
 ### Use docker logs [access]?
 ###
+if ! set | grep '^DOCKER_LOGS_ACCESS=' >/dev/null 2>&1 || [ "${DOCKER_LOGS_ACCESS}" != "1" ]; then
 
-if ! set | grep '^DOCKER_LOGS_ACCESS=' >/dev/null 2>&1; then
-	log "warn" "\$DOCKER_LOGS_ACCESS not set."
-	log "warn" "Logging access to file inside container"
-else
-	# ---- 1/3 Enabled ----
-	if [ "${DOCKER_LOGS_ACCESS}" = "1" ]; then
-		log "info" "Logging access to docker logs"
-
-		run "ln -sf /proc/self/fd/2 ${PHP_FPM_POOL_LOG_ACC}"
-
-	# ---- 2/3 Disabled
-	elif [ "${DOCKER_LOGS_ACCESS }" = "0" ]; then
+	# Why was it not enabled?
+	if ! set | grep '^DOCKER_LOGS_ACCESS=' >/dev/null 2>&1; then
+		log "warn" "\$DOCKER_LOGS_ACCESS not set."
+		log "warn" "Not logging access to docker logs, using file inside container"
+	elif [ "${DOCKER_LOGS_ACCESS}" = "0" ]; then
 		log "info" "Not logging access to docker logs, using file inside container"
-
-		if [ -L "${PHP_POOL_LOG_ACC}" ]; then
-			run "rm -f ${PHP_POOL_LOG_ACC}"
-			run "touch ${PHP_POOL_LOG_ACC}"
-			run "chmod 0666 ${PHP_POOL_LOG_ACC}"
-		fi
-
-	# ---- 3/3 Wrong value ----
 	else
 		log "err" "Invalid value for \$DOCKER_LOGS_ACCESS: ${DOCKER_LOGS_ACCESS}"
 		log "err" "Must be '1' (for On) or '0' (for Off)"
 		exit 1
 	fi
+
+	# Delete left-over symlinks from previous run (if docker-logs was enabled)
+	if [ -L "${MY_LOG_FILE_POOL_ACC}" ]; then
+		run "rm -f ${MY_LOG_FILE_POOL_ACC}"
+	fi
+
+	# Create files if not exists
+	if [ ! -f "${MY_LOG_FILE_POOL_ACC}" ]; then
+		run "touch ${MY_LOG_FILE_POOL_ACC}"
+	fi
+
+	# Fix permissions
+	run "chmod 0664 ${MY_LOG_FILE_POOL_ACC}"
+	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_POOL_ACC}"
+
+elif [ "${DOCKER_LOGS_ACCESS}" = "1" ]; then
+	log "info" "Logging access to docker logs"
+	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_POOL_ACC}"
+else
+	log "err" "Invalid choice for \$DOCKER_LOGS_ACCESS"
+	exit 1
 fi
 
 
@@ -176,33 +284,40 @@ fi
 ###
 ### Use docker logs [xdebug]?
 ###
+if ! set | grep '^DOCKER_LOGS_XDEBUG=' >/dev/null 2>&1 || [ "${DOCKER_LOGS_XDEBUG}" != "1" ]; then
 
-if ! set | grep '^DOCKER_LOGS_XDEBUG=' >/dev/null 2>&1; then
-	log "warn" "\$DOCKER_LOGS_XDEBUGnot set."
-	log "warn" "Logging xdebug to file inside container"
-else
-	# ---- 1/3 Enabled ----
-	if [ "${DOCKER_LOGS_XDEBUG}" = "1" ]; then
-		log "info" "Logging xdebug to docker logs"
-
-		run "ln -sf /proc/self/fd/2 ${PHP_LOG_XDEBUG}"
-
-	# ---- 2/3 Disabled
+	# Why was it not enabled?
+	if ! set | grep '^DOCKER_LOGS_XDEBUG=' >/dev/null 2>&1; then
+		log "warn" "\$DOCKER_LOGS_XDEBUG not set."
+		log "warn" "Not logging xdebug to docker logs, using file inside container"
 	elif [ "${DOCKER_LOGS_XDEBUG}" = "0" ]; then
 		log "info" "Not logging xdebug to docker logs, using file inside container"
-
-		if [ -L "${PHP_LOG_XDEBUG}" ]; then
-			run "rm -f ${PHP_LOG_XDEBUG}"
-			run "touch ${PHP_LOG_XDEBUG}"
-			run "chmod 0666 ${PHP_LOG_XDEBUG}"
-		fi
-
-	# ---- 3/3 Wrong value ----
 	else
 		log "err" "Invalid value for \$DOCKER_LOGS_XDEBUG: ${DOCKER_LOGS_XDEBUG}"
 		log "err" "Must be '1' (for On) or '0' (for Off)"
 		exit 1
 	fi
+
+	# Delete left-over symlinks from previous run (if docker-logs was enabled)
+	if [ -L "${MY_LOG_FILE_XDEBUG}" ]; then
+		run "rm -f ${MY_LOG_FILE_XDEBUG}"
+	fi
+
+	# Create files if not exists
+	if [ ! -f "${MY_LOG_FILE_XDEBUG}" ]; then
+		run "touch ${MY_LOG_FILE_XDEBUG}"
+	fi
+
+	# Fix permissions
+	run "chmod 0664 ${MY_LOG_FILE_XDEBUG}"
+	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_XDEBUG}"
+
+elif [ "${DOCKER_LOGS_XDEBUG}" = "1" ]; then
+	log "info" "Logging xdebug to docker logs"
+	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_XDEBUG}"
+else
+	log "err" "Invalid choice for \$DOCKER_LOGS_XDEBUG"
+	exit 1
 fi
 
 
@@ -210,7 +325,6 @@ fi
 ###
 ### Adjust timezone
 ###
-
 if ! set | grep '^TIMEZONE='  >/dev/null 2>&1; then
 	log "warn" "\$TIMEZONE not set."
 	log "warn" "Setting PHP: timezone=UTC"
@@ -240,8 +354,11 @@ log "info" "Docker date set to: $(date)"
 ###
 
 log "info" "Adding custom configuration files:"
-run "find ${PHP_CUST_CONF_DIR} -type f -iname \"*.ini\" -exec echo \"Copying: {} to ${PHP_CONF_DIR}/\" \; -exec cp \"{}\" ${PHP_CONF_DIR}/ \;"
-run "find ${PHP_CONF_DIR} -name '*.ini' -exec chmod 0644 {} \;"
+if [ -d "${MY_CFG_DIR_PHP_CUSTOM}" ]; then
+	run "find ${MY_CFG_DIR_PHP_CUSTOM} -type f -iname \"*.ini\" -exec echo \"Copying: {} to ${PHP_CONF_DIR}/\" \; -exec cp \"{}\" ${PHP_CONF_DIR}/ \;"
+	run "find ${PHP_CONF_DIR} -name '*.ini' -exec chmod 0644 {} \;"
+fi
+
 
 
 ###
@@ -250,7 +367,6 @@ run "find ${PHP_CONF_DIR} -name '*.ini' -exec chmod 0644 {} \;"
 
 # Get xdebug config
 XDEBUG_CONFIG="$( find /etc/php.d -name \*xdebug\*.ini )"
-
 
 if ! set | grep '^PHP_XDEBUG_ENABLE=' >/dev/null 2>&1; then
 	log "warn" "\$PHP_XDEBUG_ENABLE not set. Disable Xdebug"
@@ -290,7 +406,7 @@ else
 		if [ ! -f "${XDEBUG_CONFIG}" ]; then
 			log "err" "No xdebug configuration file found."
 			log "err" "This should not happen."
-			log "err" "Please file a bug at https://github.com/cytopia/docker-php-fpm-7.1"
+			log "err" "Please file a bug at https://github.com/cytopia/docker-php-fpm-5.4"
 			exit 1
 		fi
 
@@ -330,102 +446,46 @@ fi
 
 
 ###
-### Forward remote MySQL port to 127.0.0.1 ?
+### Port forwarding
 ###
-if ! set | grep '^FORWARD_MYSQL_PORT_TO_LOCALHOST=' >/dev/null 2>&1; then
-	log "warn" "\$FORWARD_MYSQL_PORT_TO_LOCALHOST not set."
-	log "warn" "Not forwading MySQL port to 127.0.0.1 inside docker"
+if ! set | grep '^FORWARD_PORTS_TO_LOCALHOST=' >/dev/null 2>&1; then
+	log "warn" "\$FORWARD_PORTS_TO_LOCALHOST not set."
+	log "warn" "Not ports from other machines will be forwarded to 127.0.0.1 inside this docker"
 else
+	# Transform into newline separated forwards:
+	#   local-port:host:remote-port\n
+	#   local-port:host:remote-port\n
+	_forwards="$( echo "${FORWARD_PORTS_TO_LOCALHOST}" | sed 's/[[:space:]]*//g' | sed 's/,/\n/g' )"
 
-	if [ "${FORWARD_MYSQL_PORT_TO_LOCALHOST}" = "1" ]; then
-		if ! set | grep '^MYSQL_REMOTE_ADDR=' >/dev/null 2>&1; then
-			log "err" "You have enabled to port-forward database port to 127.0.0.1."
-			log "err" "\$MYSQL_REMOTE_ADDR must be set for this to work."
+	# loop over them
+	IFS='
+	'
+	for forward in ${_forwards}; do
+		_lport="$( echo "${forward}" | awk -F':' '{print $1}' )"
+		_rhost="$( echo "${forward}" | awk -F':' '{print $2}' )"
+		_rport="$( echo "${forward}" | awk -F':' '{print $3}' )"
+
+		if ! isint "${_lport}"; then
+			log "err" "Port forwarding error: local port is not an integer: ${_lport}"
+			log "err" "Line: ${forward}"
 			exit 1
 		fi
-		if ! set | grep '^MYSQL_REMOTE_PORT=' >/dev/null 2>&1; then
-			log "err" "You have enabled to port-forward database port to 127.0.0.1."
-			log "err" "\$MYSQL_REMOTE_PORT must be set for this to work."
+		if ! isip "${_rhost}" && ! ishostname "${_rhost}"; then
+			log "err" "Port forwarding error: remote host is not a valid IP and not a valid hostname: ${_rhost}"
+			log "err" "Line: ${forward}"
+			log "err" ""
 			exit 1
 		fi
-		if ! set | grep '^MYSQL_LOCAL_PORT=' >/dev/null 2>&1; then
-			log "err" "You have enabled to port-forward database port to 127.0.0.1."
-			log "err" "\$MYSQL_LOCAL_PORT must be set for this to work."
-			exit 1
-		fi
-
-		##
-		## Start socat tunnel
-		## bring mysql to localhost
-		##
-		## This allos to connect via mysql -h 127.0.0.1
-		##
-		log "info" "Forwarding $MYSQL_REMOTE_ADDR:$MYSQL_REMOTE_PORT to 127.0.0.1:${MYSQL_LOCAL_PORT} inside this docker."
-		run "/usr/bin/socat tcp-listen:${MYSQL_LOCAL_PORT},reuseaddr,fork tcp:$MYSQL_REMOTE_ADDR:$MYSQL_REMOTE_PORT &"
-
-	elif [ "${FORWARD_MYSQL_PORT_TO_LOCALHOST}" = "0" ]; then
-		log "info" "Not forwading MySQL port to 127.0.0.1 inside docker"
-
-	else
-		log "err" "Invalid value for \$FORWARD_MYSQL_PORT_TO_LOCALHOST"
-		log "err" "Only 1 (for on) or 0 (for off) are allowed"
-		exit 1
-	fi
-fi
-
-
-
-###
-### Mount remote MySQL socket volume to local disk?
-###
-if ! set | grep '^MOUNT_MYSQL_SOCKET_TO_LOCALDISK=' >/dev/null 2>&1; then
-	log "warn" "\$MOUNT_MYSQL_SOCKET_TO_LOCALDISK not set."
-	log "warn" "Not mounting MySQL socket inside docker."
-else
-	if [ "${MOUNT_MYSQL_SOCKET_TO_LOCALDISK}" = "1" ]; then
-		if ! set | grep '^MYSQL_SOCKET_PATH=' >/dev/null 2>&1; then
-			log "err" "You have enabled to mount mysql socket to local disk."
-			log "err" "\$MYSQL_SOCKET_PATH must be set for this to work."
+		if ! isint "${_rport}"; then
+			log "err" "Port forwarding error: remote port is not an integer: ${_rport}"
+			log "err" "Line: ${forward}"
+			log "err" ""
 			exit 1
 		fi
 
-		##
-		## Tell MySQL Client where the socket can be found.
-		##
-		## This allos to connect via mysql -h localhost
-		##
-		log "info" "Setting MySQL client config: socket=${MYSQL_SOCKET_PATH}"
-
-		run "echo '[client]'						> /etc/my.cnf"
-		run "echo 'socket = ${MYSQL_SOCKET_PATH}'	>> /etc/my.cnf"
-
-		run "echo '[mysql]'							>> /etc/my.cnf"
-		run "echo 'socket = ${MYSQL_SOCKET_PATH}'	>> /etc/my.cnf"
-
-
-
-		##
-		## Tell PHP where the socket can be found.
-		##
-		## This allos to connect via mysql -h localhost
-		##
-		log "info" "Setting PHP: mysql.default_socket=${MYSQL_SOCKET_PATH}"
-		run "sed -i'' 's|mysql.default_socket.*$|mysql.default_socket = ${MYSQL_SOCKET_PATH}|g' /etc/php.ini"
-
-		log "info" "Setting PHP: mysqli.default_socket=${MYSQL_SOCKET_PATH}"
-		run "sed -i'' 's|mysqli.default_socket.*$|mysqli.default_socket = ${MYSQL_SOCKET_PATH}|g' /etc/php.ini"
-
-		log "info" "Setting PHP: pdo_mysql.default_socket=${MYSQL_SOCKET_PATH}"
-		run "sed -i'' 's|pdo_mysql.default_socket.*$|pdo_mysql.default_socket = ${MYSQL_SOCKET_PATH}|g' /etc/php.ini"
-
-	elif [ "${MOUNT_MYSQL_SOCKET_TO_LOCALDISK}" = "0" ]; then
-		log "info" "Not mounting MySQL socket inside docker."
-
-	else
-		log "err" "Invalid value for \$MOUNT_MYSQL_SOCKET_TO_LOCALDISK"
-		log "err" "Only 1 (for on) or 0 (for off) are allowed"
-		exit 1
-	fi
+		log "info" "Forwarding ${_rhost}:${_rport} to 127.0.0.1:${_lport} inside this docker."
+		run "/usr/bin/socat tcp-listen:${_lport},reuseaddr,fork tcp:${_rhost}:${_rport} &"
+	done
 fi
 
 
@@ -441,36 +501,23 @@ else
 
 		log "info" "Enabling sending of emails."
 
-		MAIL_USER="mailtrap"
-
-		##
-		## 1. User configuration
-		##
-
-		# Add user if it does not exist
-		if ! id -u "${MAIL_USER}" > /dev/null 2>&1; then
-			run "adduser ${MAIL_USER}"
-		fi
-
 		# Add Mail file if it does not exist
-		if [ ! -f "/var/mail/${MAIL_USER}" ]; then
-			run "touch /var/mail/${MAIL_USER}"
+		if [ ! -f "/var/mail/${MY_USER}" ]; then
+			run "touch /var/mail/${MY_USER}"
 		fi
 
 		# Fix mail user permissions after mount
-		run "chmod 0666 /var/mail/${MAIL_USER}"
-		run "chown ${MAIL_USER}:${MAIL_USER} /var/mail/${MAIL_USER}"
+		run "chmod 0644 /var/mail/${MY_USER}"
+		run "chown ${MY_USER}:${MY_GROUP} /var/mail/${MY_USER}"
 
-
-		##
-		## 2. Postfix configuration
-		##
+		# Postfix configuration
 		run "sed -i'' 's/^inet_protocols.*/inet_protocols = ipv4/g' /etc/postfix/main.cf"
 		run "echo 'virtual_alias_maps = pcre:/etc/postfix/virtual' >> /etc/postfix/main.cf"
-		run "echo '/.*@.*/ ${MAIL_USER}' >> /etc/postfix/virtual"
+		run "echo '/.*@.*/ ${MY_USER}' >> /etc/postfix/virtual"
 		run "newaliases"
-		run "postfix start"
 
+		# Start Postfix
+		run "postfix start"
 
 	elif [ "${ENABLE_MAIL}" = "0" ]; then
 		log "info" "Disabling sending of emails."
@@ -485,10 +532,30 @@ fi
 
 
 ###
-### Fix logdir/file
+### Fix uid/gid permissions of mounted volumes
 ###
-run "chmod 0777 ${PHP_FPM_LOG_DIR}"
-run "find ${PHP_FPM_LOG_DIR} -type f -exec chmod 0666 {} \;"
+# Log dir
+run "chown -R ${MY_USER}:${MY_GROUP} ${MY_LOG_DIR}"
+run "chmod 0755 ${MY_LOG_DIR}"
+run "find ${MY_LOG_DIR} -type f -exec chmod 0644 {} \;"
+# PHP dirs
+if [ -d "/var/lib/php/session" ]; then
+	run "rm -rf /var/lib/php/session"
+fi
+run "mkdir -p /var/lib/php/session"
+run "chown -R ${MY_USER}:${MY_GROUP} /var/lib/php/session"
+# Home dir
+run "chown -R ${MY_USER}:${MY_GROUP} /home/${MY_USER}"
+# Data dir
+if [ -d "/shared/httpd" ]; then
+	run "chown ${MY_USER}:${MY_GROUP} /shared/httpd"
+fi
+
+
+###
+### Nice shell prompt
+###
+run "echo \". /etc/bash_profile\" >> /etc/bashrc"
 
 
 
@@ -496,4 +563,4 @@ run "find ${PHP_FPM_LOG_DIR} -type f -exec chmod 0666 {} \;"
 ### Start
 ###
 log "info" "Starting $(php-fpm -v 2>&1 | head -1)"
-exec /usr/sbin/php-fpm --force-stderr
+exec /usr/sbin/php-fpm
