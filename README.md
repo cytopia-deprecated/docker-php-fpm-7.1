@@ -34,13 +34,11 @@
 | DOCKER_LOGS_ERROR | bool | `0` | Log errors to `docker logs` instead of file inside container.<br/>Value: `0` or `1`<br/>**Note:** When using this container with a webserver and set to `1` (log to `docker logs`), php errors will strangely be redirected to the webservers error log. So also make sure to send the webserver error log to `docker logs`.|
 | DOCKER_LOGS_ACCESS | bool | `0` | Log access to `docker logs` instead of file inside container.<br/>Value: `0` or `1` |
 | DOCKER_LOGS_XDEBUG | bool | `0` | Log php xdebug to `docker logs` instead of file inside container.<br/>Value: `0` or `1` |
+| NEW_UID | integer | `1000` | Assign the default `devilbox` user a new UID. This is useful if you also want to work inside this container in order to be able to access your mounted files with the same UID. Set it to your host users uid (see `id` for your uid). |
+| NEW_GID | integer | `1000` | Assign the default `devilbox` group a new GID. This is useful if you also want to work inside this container in order to be able to access your mounted files with the same GID. Set it to your host group gid (see `id` for your gid). |
 | TIMEZONE | string | `UTC` | Set docker OS timezone as well as PHP timezone.<br/>(Example: `Europe/Berlin`) |
-| ENABLE_MAIL | bool | `0` | Allow sending emails. Postfix will be configured for local delivery and all sent mails (even to real domains) will be catched locally. No email will ever go out. They will all be stored in a local `mailtrap` account.<br/>Value: `0` or `1` |
-| FORWARD_MYSQL_PORT_TO_LOCALHOST | bool | `0` | Forward a remote MySQL server port to listen on this docker on `127.0.0.1`<br/>Value: `0` or `1` |
-| MYSQL_REMOTE_ADDR | string | `` | The remote IP address of the MySQL host from which to port-forward.<br/>This is required if $FORWARD_MYSQL_PORT_TO_LOCALHOST is turned on. |
-| MYSQL_REMOTE_PORT | int | `` | The remote port of the MySQL host from which to port-forward.<br/>This is required if $FORWARD_MYSQL_PORT_TO_LOCALHOST is turned on. |
-| MYSQL_LOCAL_PORT | int | `` | Forward the MySQL port to `127.0.0.1` to the specified local port.<br/>This is required if $FORWARD_MYSQL_PORT_TO_LOCALHOST is turned on. |
-| MOUNT_MYSQL_SOCKET_TO_LOCALDISK | bool | `0` | Mount a remote MySQL server socket to local disk on this docker.<br/>Value: `0` or `1` |
+| ENABLE_MAIL | bool | `0` | Allow sending emails. Postfix will be configured for local delivery and all sent mails (even to real domains) will be catched locally. No email will ever go out. They will all be stored in a local `devilbox` account.<br/>Value: `0` or `1` |
+| FORWARD_PORTS_TO_LOCALHOST | string | `` | List of remote ports to forward to `127.0.0.1`.<br/>Format: `<local-port>:<remote-host>:<remote-port>`. You can separate multiple entries by comma.<br/>Example: `3306:mysqlhost:3306, 6379:192.0.1.1:6379` |
 | MYSQL_SOCKET_PATH | string | `` | Full socket path where the MySQL socket has been mounted on this docker.<br/>This is recommended to adjust if $MOUNT_MYSQL_SOCKET_TO_LOCALDISK is turned on.<br/><br/>Example: `/tmp/mysql/mysqld.sock` |
 | PHP_XDEBUG_ENABLE | bool | `0` | Enable Xdebug.<br/>Value: `0` or `1` |
 | PHP_XDEBUG_REMOTE_PORT | int | `9000` | The port on your Host (where you run the IDE/editor to which xdebug should connect.) |
@@ -50,7 +48,7 @@
 
 | Docker | Description |
 |--------|-------------|
-| /var/log/php-fpm | PHP-FPM log dir |
+| /var/log/php | PHP-FPM log dir |
 | /etc/php-custom.d | Custom user configuration files. Make sure to mount this folder to your host, where you have custom `*.ini` files. These files will then be copied to `/etc/php.d` during startup. |
 | /var/mail | Mail mbox directory |
 
@@ -65,9 +63,9 @@
 It is recommended to always use the `$TIMEZONE` variable which will set php's `date.timezone`.
 
 **1. Provide FPM port to host**
-```bash
+```shell
 $ docker run -i \
-    -p 127.1.0.1:9000:9000 \
+    -p 127.0.0.1:9000:9000 \
     -e TIMEZONE=Europe/Berlin \
     -t cytopia/php-fpm-7.1
 ```
@@ -75,49 +73,64 @@ $ docker run -i \
 **2. Overwrite php.ini settings**
 
 Mount a PHP config directory from your host into the PHP docker in order to overwrite php.ini settings.
-```bash
+```shell
 $ docker run -i \
     -v ~/.etc/php.d:/etc/php-custom.d \
-    -p 127.1.0.1:9000:9000 \
+    -p 127.0.0.1:9000:9000 \
     -e TIMEZONE=Europe/Berlin \
     -t cytopia/php-fpm-7.1
 ```
 
 
-**3. MySQL connect via localhost (via socket mount)**
+**3. MySQL connect via 127.0.0.1 (via port-forward)**
 
-Mount a MySQL socket from `~/run/mysqld` (on your host) into the PHP docker.
+Forward MySQL Port from `172.168.0.30` (or any other IP address/hostname) and Port `3306` to the PHP docker on `127.0.0.1:3306`. By this, your PHP files inside the docker can use `127.0.0.1` to connect to a MySQL database.
+```shell
+$ docker run -i \
+    -p 127.0.0.1:9000:9000 \
+    -e TIMEZONE=Europe/Berlin \
+    -e FORWARD_PORTS_TO_LOCALHOST='3306:172.168.0.30:3306' \
+    -t cytopia/php-fpm-7.1
+```
+
+**4. MySQL and Redis connect via 127.0.0.1 (via port-forward)**
+
+Forward MySQL Port from `172.168.0.30:3306` and Redis port from `redis:6379` to the PHP docker on `127.0.0.1:3306` and `127.0.0.1:6379`. By this, your PHP files inside the docker can use `127.0.0.1` to connect to a MySQL or Redis database.
+```shell
+$ docker run -i \
+    -p 127.0.0.1:9000:9000 \
+    -e TIMEZONE=Europe/Berlin \
+    -e FORWARD_PORTS_TO_LOCALHOST='3306:172.168.0.30:3306, 6379:redis:6379' \
+    -t cytopia/php-fpm-7.1
+```
+
+**5. MySQL connect via localhost (via socket mount)**
+
+Mount a MySQL socket from `~/run/mysqld/mysqld.sock` (on your host) into the PHP docker to `/tmp/mysql/mysqld.sock`.
 By this, your PHP files inside the docker can use `localhost` to connect to a MySQL database.
+In order to make php aware of new path of the mysql socket, we will also have to create a php config file and mount it into the container.
 
-Note that the `$MYSQL_SOCKET_PATH` (path to file) should match with the folder you mount into the docker.
-```bash
+```shell
+# Show local custom php config
+$ cat ~/tmp/cfg/php/my-config.ini
+mysql.default_socket = /tmp/mysql/mysqld.sock
+mysqli.default_socket = /tmp/mysql/mysqld.sock
+pdo_mysql.default_socket = /tmp/mysql/mysqld.sock
+
+# Start container with mounted socket and config
 $ docker run -i \
-    -v ~/run/mysqld:/var/run/mysqld \
-    -p 127.1.0.1:9000:9000 \
+    -v ~/run/mysqld:/tmp/mysql \
+    -v ~/tmp/cfg/php:/etc/php-custom.d \
+    -p 127.0.0.1:9000:9000 \
     -e TIMEZONE=Europe/Berlin \
-    -e MOUNT_MYSQL_SOCKET_TO_LOCALDISK=1 \
-    -e MYSQL_SOCKET_PATH=/var/run/mysqld/mysqld.sock \
     -t cytopia/php-fpm-7.1
 ```
 
-**4. MySQL connect via 127.1.0.1 (via port-forward)**
 
-Forward MySQL Port from `172.168.0.30` (or any other IP address/hostname) and Port `3306` to the PHP docker on `127.1.0.1:3306`. By this, your PHP files inside the docker can use `127.1.0.1` to connect to a MySQL database.
-```bash
-$ docker run -i \
-    -p 127.1.0.1:9000:9000 \
-    -e TIMEZONE=Europe/Berlin \
-    -e FORWARD_MYSQL_PORT_TO_LOCALHOST=1 \
-    -e MYSQL_REMOTE_ADDR=172.168.0.30 \
-    -e MYSQL_REMOTE_PORT=3306 \
-    -e MYSQL_LOCAL_PORT=3306 \
-    -t cytopia/php-fpm-7.1
-```
+**6. Launch Postfix for mail-catching**
 
-**5. Launch Postfix for mail-catching**
-
-Once you `$ENABLE_MAIL=1`, all mails sent via any of your PHP applications no matter to which domain, are catched locally into the `mailtrap` account. You can also mount the mail directory locally to hook in with `mutt` and read those mails.
-```bash
+Once you `$ENABLE_MAIL=1`, all mails sent via any of your PHP applications no matter to which domain, are catched locally into the `devilbox` account. You can also mount the mail directory locally to hook in with `mutt` and read those mails.
+```shell
 $ docker run -i \
     -p 127.0.0.1:9000:9000 \
     -v /tmp/mail:/var/mail \
