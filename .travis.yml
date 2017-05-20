@@ -1,9 +1,11 @@
-language: python
-python:
-  - 2.7
+###
+### Enable sudo (required for docker service)
+###
+sudo: required
+
 
 ###
-### Add services
+### Attach services
 ###
 services:
   - docker
@@ -13,373 +15,43 @@ services:
 ### Global variables
 ###
 env:
-  global:
-    - MY_DOCKER_NAME="my-php-docker"
-    - MY_VERSION="7.1"
-    - MY_CONFIG_DIR="/tmp/my-custom-config"
-    - MY_SOCKET_DIR="/tmp/my-socket-dir"
-    - MY_MAIL_DIR="/tmp/my-mail"
+  matrix:
+    - DEBUG=0
+    - DEBUG=1
+    - DEBUG=2
 
 
 ###
-### Install
+### Show information
 ###
-install:
-
-  # Create overview section script
-  - echo "#!/bin/sh" > /tmp/section.sh
-  - echo " echo '===================================================================================================='" >> /tmp/section.sh
-  - echo " echo '===================================================================================================='" >> /tmp/section.sh
-  - echo " echo \"= \${1}\"" >> /tmp/section.sh
-  - echo " echo '===================================================================================================='" >> /tmp/section.sh
-  - echo " echo '===================================================================================================='" >> /tmp/section.sh
-  - chmod +x /tmp/section.sh
-
-
-  # Show Docker version
+before_install:
+  # List versions
+  - whoami
+  - groups
+  - uname -a
+  - docker version
+  - docker-compose version
+  # Get newer docker version
+  - sudo apt-get update
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-engine
   - docker version
 
-  # Get dependencies
-  - docker pull cytopia/mysql-5.5
 
-  # Build my docker
-  - docker build -t cytopia/${MY_DOCKER_NAME} .
+###
+### Disable any provided services
+###
+before_script:
 
-  # Directory for custom config
-  - mkdir -p ${MY_CONFIG_DIR}
-  - chmod 777 ${MY_CONFIG_DIR}
-
-  # Directory for custom socket
-  - mkdir -p ${MY_SOCKET_DIR}
-  - chmod 777 ${MY_SOCKET_DIR}
-
-  # Directory for mails
-  - mkdir -p ${MY_MAIL_DIR}
-  - chmod 777 ${MY_MAIL_DIR}
-
+  # Disable services enabled by default
+  # http://docs.travis-ci.com/user/database-setup/#MySQL
+  - sudo /etc/init.d/mysql stop || true
+  - sudo /etc/init.d/postgresql stop || true
+  - sudo service mysql stop || true
+  - sudo service postgresql stop || true
 
 
 ###
 ### Test
 ###
 script:
-
-  ################################################################################
-  ## 01.) [a](DEBUG) Test plain docker
-  ################################################################################
-  - /tmp/section.sh "01.) [a](DEBUG) Test plain docker"
-  - docker run
-      -e DEBUG_COMPOSE_ENTRYPOINT=1
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Check version
-  - docker exec ${MY_DOCKER_NAME} php --version | grep "PHP ${MY_VERSION}"
-  # PHP-FPM is running?
-  - docker exec ${MY_DOCKER_NAME} ps auxw | grep 'php-fpm'
-
-  # Xdebug should be off
-  - if docker exec ${MY_DOCKER_NAME} php -m | grep 'xdebug'; then false; else true; fi
-  # Socat should not be running?
-  - if docker exec ${MY_DOCKER_NAME} ps auxw | grep 'socat'; then false; else true; fi
-  # No Custom Configuration (For this Round)
-  - if docker exec ${MY_DOCKER_NAME} php --ini | grep -q 'custom.ini'; then false; else true; fi
-  # Check Timezone
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('date.timezone'));" | grep 'UTC'
-
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "${MY_DOCKER_NAME}"
-  ##
-  ## 01.) [b](SILENT) Test plain docker
-  ##
-  - /tmp/section.sh "01.) [b](SILENT) Test plain docker"
-  - docker run
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Check version
-  - docker exec ${MY_DOCKER_NAME} php --version | grep "PHP ${MY_VERSION}"
-  # PHP-FPM is running?
-  - docker exec ${MY_DOCKER_NAME} ps auxw | grep 'php-fpm'
-
-  # Xdebug should be off
-  - if docker exec ${MY_DOCKER_NAME} php -m | grep 'xdebug'; then false; else true; fi
-  # Socat should not be running?
-  - if docker exec ${MY_DOCKER_NAME} ps auxw | grep 'socat'; then false; else true; fi
-  # No Custom Configuration (For this Round)
-  - if docker exec ${MY_DOCKER_NAME} php --ini | grep -q 'custom.ini'; then false; else true; fi
-  # Check Timezone
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('date.timezone'));" | grep 'UTC'
-
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "${MY_DOCKER_NAME}"
-
-
-
-  ################################################################################
-  ## 02.) [a](DEBUG) Timezone
-  ################################################################################
-  - /tmp/section.sh "02.) [a](DEBUG) Timezone"
-  - docker run
-      -e DEBUG_COMPOSE_ENTRYPOINT=1
-      -e TIMEZONE=Europe/Berlin
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Check Timezone
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('date.timezone'));" | grep 'Europe/Berlin'
-
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "${MY_DOCKER_NAME}"
-  ##
-  ## 02.) [b](SILENT) Timezone
-  ##
-  - /tmp/section.sh "02.) [b](SILENT) Timezone"
-  - docker run
-      -e TIMEZONE=Europe/Berlin
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Check Timezone
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('date.timezone'));" | grep 'Europe/Berlin'
-
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "${MY_DOCKER_NAME}"
-
-
-
-  ################################################################################
-  ## 03.) [a](DEBUG) Xdebug
-  ################################################################################
-  - /tmp/section.sh "03.) [a](DEBUG) Xdebug"
-  - docker run
-      -e DEBUG_COMPOSE_ENTRYPOINT=1
-      -e PHP_XDEBUG_ENABLE=1
-      -e PHP_XDEBUG_REMOTE_HOST=127.0.0.1
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Check Xdebug Checks
-  - docker exec ${MY_DOCKER_NAME} php -m | grep 'xdebug'
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('xdebug.default_enable'));" | grep '1'
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('xdebug.remote_host'));" | grep '127.0.0.1'
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('xdebug.remote_port'));" | grep '9000'
-
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "${MY_DOCKER_NAME}"
-  ##
-  ## 03.) [b](SILENT) Xdebug
-  ##
-  - /tmp/section.sh "03.) [b](SILENT) Xdebug"
-  - docker run
-      -e PHP_XDEBUG_ENABLE=1
-      -e PHP_XDEBUG_REMOTE_HOST=127.0.0.1
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Check Xdebug Checks
-  - docker exec ${MY_DOCKER_NAME} php -m | grep 'xdebug'
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('xdebug.default_enable'));" | grep '1'
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('xdebug.remote_host'));" | grep '127.0.0.1'
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('xdebug.remote_port'));" | grep '9000'
-
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "${MY_DOCKER_NAME}"
-
-
-
-  ################################################################################
-  ## 04.) [a](DEBUG) Custom configuration
-  ################################################################################
-  - /tmp/section.sh "04.) [a](DEBUG) Custom configuration"
-  - printf "[PHP]\n%s\n" "upload_max_filesize = 2048M" > ${MY_CONFIG_DIR}/custom.ini
-
-  - docker run
-      -v ${MY_CONFIG_DIR}:/etc/php-custom.d
-      -e DEBUG_COMPOSE_ENTRYPOINT=1
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Test custom configuration
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('upload_max_filesize'));" | grep '2048'
-
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "${MY_DOCKER_NAME}"
-  ##
-  ## 04.) [b](SILENT) Custom configuration
-  ##
-  - /tmp/section.sh "04.) [b](SILENT) Custom configuration"
-  - printf "[PHP]\n%s\n" "upload_max_filesize = 2048M" > ${MY_CONFIG_DIR}/custom.ini
-
-  - docker run
-      -v ${MY_CONFIG_DIR}:/etc/php-custom.d
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Test custom configuration
-  - docker exec ${MY_DOCKER_NAME} php -r "printf(\"%s\n\", ini_get('upload_max_filesize'));" | grep '2048'
-
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "${MY_DOCKER_NAME}"
-
-
-
-  ################################################################################
-  ## 05.) [a](DEBUG) Test MySQL 127.0.0.1 port-forwarding
-  ################################################################################
-  - /tmp/section.sh "05.) [a](DEBUG) Test MySQL 127.0.0.1 port-forwarding"
-  - docker run
-      -e DEBUG_COMPOSE_ENTRYPOINT=1
-      -e MYSQL_ROOT_PASSWORD=
-      --name mysql cytopia/mysql-5.5 &
-  - sleep 15
-
-  - docker run
-      -e DEBUG_COMPOSE_ENTRYPOINT=1
-      -e FORWARD_MYSQL_PORT_TO_LOCALHOST=1
-      -e MYSQL_REMOTE_ADDR=mysql
-      -e MYSQL_REMOTE_PORT=3306
-      -e MYSQL_LOCAL_PORT=3306
-      --link mysql
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Check for socat
-  - docker exec ${MY_DOCKER_NAME} ps auxw | grep 'socat'
-
-  # Test 127.0.0.1 MySQL connection
-  - docker exec ${MY_DOCKER_NAME} php -r "if (@mysqli_connect('127.0.0.1', 'root', '')) echo \"YES\n\"; else echo \"NO\n\";" | grep 'YES'
-  - docker exec ${MY_DOCKER_NAME} php -r "if (@mysqli_connect('localhost', 'root', '')) echo \"YES\n\"; else echo \"NO\n\";" | grep 'NO'
-
-  - docker stop "$( docker ps | grep  "mysql" | awk '{print $1}' )"
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "mysql"
-  - docker rm "${MY_DOCKER_NAME}"
-  ##
-  ## 05.) [b](SILENT) Test MySQL 127.0.0.1 port-forwarding
-  ##
-  - /tmp/section.sh "05.) [b](SILENT) Test MySQL 127.0.0.1 port-forwarding"
-  - docker run
-      -e MYSQL_ROOT_PASSWORD=
-      --name mysql cytopia/mysql-5.5 &
-  - sleep 15
-
-  - docker run
-      -e FORWARD_MYSQL_PORT_TO_LOCALHOST=1
-      -e MYSQL_REMOTE_ADDR=mysql
-      -e MYSQL_REMOTE_PORT=3306
-      -e MYSQL_LOCAL_PORT=3306
-      --link mysql
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Check for socat
-  - docker exec ${MY_DOCKER_NAME} ps auxw | grep 'socat'
-
-  # Test 127.0.0.1 MySQL connection
-  - docker exec ${MY_DOCKER_NAME} php -r "if (@mysqli_connect('127.0.0.1', 'root', '')) echo \"YES\n\"; else echo \"NO\n\";" | grep 'YES'
-  - docker exec ${MY_DOCKER_NAME} php -r "if (@mysqli_connect('localhost', 'root', '')) echo \"YES\n\"; else echo \"NO\n\";" | grep 'NO'
-
-  - docker stop "$( docker ps | grep  "mysql" | awk '{print $1}' )"
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "mysql"
-  - docker rm "${MY_DOCKER_NAME}"
-
-
-
-  ################################################################################
-  ## 06.) [a](DEBUG) Test MySQL localhost socket mount
-  ################################################################################
-  - /tmp/section.sh "06.) [a](DEBUG) Test MySQL localhost socket mount"
-  - docker run
-      -v ${MY_SOCKET_DIR}:/tmp/mysql-sock
-      -e DEBUG_COMPOSE_ENTRYPOINT=1
-      -e MYSQL_ROOT_PASSWORD=
-      -e MYSQL_SOCKET_DIR=/tmp/mysql-sock
-      --name mysql cytopia/mysql-5.5 &
-  - sleep 15
-
-  - docker run
-      -v ${MY_SOCKET_DIR}:/tmp/mysql-sock
-      -e DEBUG_COMPOSE_ENTRYPOINT=1
-      -e MOUNT_MYSQL_SOCKET_TO_LOCALDISK=1
-      -e MYSQL_SOCKET_PATH=/tmp/mysql-sock/mysqld.sock
-      --link mysql
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Test localhost MySQL connection
-  - docker exec ${MY_DOCKER_NAME} php -r "if (@mysqli_connect('localhost', 'root', '')) echo \"YES\n\"; else echo \"NO\n\";" | grep 'YES'
-  - docker exec ${MY_DOCKER_NAME} php -r "if (@mysqli_connect('127.0.0.1', 'root', '')) echo \"YES\n\"; else echo \"NO\n\";" | grep 'NO'
-
-  - docker stop "$( docker ps | grep  "mysql" | awk '{print $1}' )"
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "mysql"
-  - docker rm "${MY_DOCKER_NAME}"
-  ##
-  ## 06.) [b](SILENT) Test MySQL localhost socket mount
-  ##
-  - /tmp/section.sh "06.) [b](SILENT) Test MySQL localhost socket mount"
-  - docker run
-      -v ${MY_SOCKET_DIR}:/tmp/mysql-sock
-      -e MYSQL_ROOT_PASSWORD=
-      -e MYSQL_SOCKET_DIR=/tmp/mysql-sock
-      --name mysql cytopia/mysql-5.5 &
-  - sleep 15
-
-  - docker run
-      -v ${MY_SOCKET_DIR}:/tmp/mysql-sock
-      -e MOUNT_MYSQL_SOCKET_TO_LOCALDISK=1
-      -e MYSQL_SOCKET_PATH=/tmp/mysql-sock/mysqld.sock
-      --link mysql
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 5
-  - docker ps
-
-  # Test localhost MySQL connection
-  - docker exec ${MY_DOCKER_NAME} php -r "if (@mysqli_connect('localhost', 'root', '')) echo \"YES\n\"; else echo \"NO\n\";" | grep 'YES'
-  - docker exec ${MY_DOCKER_NAME} php -r "if (@mysqli_connect('127.0.0.1', 'root', '')) echo \"YES\n\"; else echo \"NO\n\";" | grep 'NO'
-
-  - docker stop "$( docker ps | grep  "mysql" | awk '{print $1}' )"
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "mysql"
-  - docker rm "${MY_DOCKER_NAME}"
-
-
-
-  ################################################################################
-  ## 07.) [a](DEBUG) Test Postfix mail delivery
-  ################################################################################
-  - /tmp/section.sh "07.) [a](DEBUG) Test Postfix mail delivery"
-  - docker run
-      -v ${MY_MAIL_DIR}:/var/mail
-      -e DEBUG_COMPOSE_ENTRYPOINT=1
-      -e ENABLE_MAIL=1
-      --name ${MY_DOCKER_NAME} cytopia/${MY_DOCKER_NAME} &
-  - sleep 15
-
-  - docker ps
-
-  # Test Emails
-  - ls -la ${MY_MAIL_DIR}/
-  - cat ${MY_MAIL_DIR}/mailtrap
-
-  - docker exec ${MY_DOCKER_NAME} php -r "mail('test@example.com', 'test-email', 'the message');"
-
-  - ls -la ${MY_MAIL_DIR}/
-  - cat ${MY_MAIL_DIR}/mailtrap
-  - grep -q 'test-email' ${MY_MAIL_DIR}/mailtrap
-
-  - docker stop "$( docker ps | grep  "${MY_DOCKER_NAME}" | awk '{print $1}' )"
-  - docker rm "${MY_DOCKER_NAME}"
+  - build/docker-validate.sh "${DEBUG}"

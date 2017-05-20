@@ -6,9 +6,6 @@
 PHP_FPM_POOL_CONF="/etc/php-fpm.d/www.conf"
 PHP_FPM_CONF="/etc/php-fpm.conf"
 
-# Custom php directory to look for *.ini files
-PHP_CUST_CONF_DIR="/etc/php-custom.d"
-
 
 ###
 ### Functions
@@ -60,12 +57,6 @@ if [ "$( grep -c '^variables_order[[:space:]]*=' /etc/php.ini )" != "1" ]; then
 	exit 1
 fi
 
-# Add custom php configuration directory
-if [ ! -d "${PHP_CUST_CONF_DIR}" ]; then
-	run "mkdir -p ${PHP_CUST_CONF_DIR}"
-fi
-run "chmod 777 ${PHP_CUST_CONF_DIR}"
-
 
 
 ###
@@ -83,13 +74,13 @@ fi
 # Set error log
 if grep -q '^error_log[[:space:]]*=' "${PHP_FPM_CONF}"; then
 	# shellcheck disable=SC2153
-	run "sed -i'' 's|error_log[[:space:]]*=.*$|error_log = ${PHP_FPM_LOG_ERR}|g' ${PHP_FPM_CONF}"
+	run "sed -i'' 's|error_log[[:space:]]*=.*$|error_log = ${MY_LOG_FILE_FPM_ERR}|g' ${PHP_FPM_CONF}"
 elif grep -q '^;error_log[[:space:]]*=' "${PHP_FPM_CONF}"; then
-	run "sed -i'' 's|;error_log[[:space:]]*=.*$|error_log = ${PHP_FPM_LOG_ERR}|g' ${PHP_FPM_CONF}"
+	run "sed -i'' 's|;error_log[[:space:]]*=.*$|error_log = ${MY_LOG_FILE_FPM_ERR}|g' ${PHP_FPM_CONF}"
 else
-	run "sed -i'' 's|\[global\]|[global]\nerror_log = ${PHP_FPM_LOG_ERR}|g' ${PHP_FPM_CONF}"
+	run "sed -i'' 's|\[global\]|[global]\nerror_log = ${MY_LOG_FILE_FPM_ERR}|g' ${PHP_FPM_CONF}"
 fi
-grep -q "^error_log = ${PHP_FPM_LOG_ERR}$" "${PHP_FPM_CONF}"
+grep -q "^error_log = ${MY_LOG_FILE_FPM_ERR}$" "${PHP_FPM_CONF}"
 if [ "$( grep -c '^error_log[[:space:]]*=' "${PHP_FPM_CONF}" )" != "1" ]; then
 	exit 1
 fi
@@ -125,13 +116,13 @@ fi
 # Set Pool Access Log
 # access.log = path
 if grep -q '^access\.log[[:space:]]*=' "${PHP_FPM_POOL_CONF}"; then
-	run "sed -i'' 's|access\.log[[:space:]]*=.*$|access.log = ${PHP_FPM_POOL_LOG_ACC}|g' ${PHP_FPM_POOL_CONF}"
+	run "sed -i'' 's|access\.log[[:space:]]*=.*$|access.log = ${MY_LOG_FILE_ACC}|g' ${PHP_FPM_POOL_CONF}"
 elif grep -q '^;[[:space:]]*access\.log[[:space:]]*=' "${PHP_FPM_POOL_CONF}"; then
-	run "sed -i'' 's|;[[:space:]]*access\.log[[:space:]]*=.*$|access.log = ${PHP_FPM_POOL_LOG_ACC}|g' ${PHP_FPM_POOL_CONF}"
+	run "sed -i'' 's|;[[:space:]]*access\.log[[:space:]]*=.*$|access.log = ${MY_LOG_FILE_ACC}|g' ${PHP_FPM_POOL_CONF}"
 else
-	run "sed -i'' 's|\[www\]|[www]\naccess.log = ${PHP_FPM_POOL_LOG_ACC}|g' ${PHP_FPM_POOL_CONF}"
+	run "sed -i'' 's|\[www\]|[www]\naccess.log = ${MY_LOG_FILE_ACC}|g' ${PHP_FPM_POOL_CONF}"
 fi
-grep -q "^access\.log = ${PHP_FPM_POOL_LOG_ACC}$" "${PHP_FPM_POOL_CONF}"
+grep -q "^access\.log = ${MY_LOG_FILE_ACC}$" "${PHP_FPM_POOL_CONF}"
 if [ "$( grep -c '^access\.log[[:space:]]*=' "${PHP_FPM_POOL_CONF}" )" != "1" ]; then
 	exit 1
 fi
@@ -145,7 +136,6 @@ elif grep -q '^;[[:space:]]*access\.format[[:space:]]*=' "${PHP_FPM_POOL_CONF}";
 else
 	run "sed -i'' 's|\[www\]|[www]\naccess.format = \"\[%{%d-%b-%Y:%H:%M:%S}t\] %R - \\\\\"%m %r%Q%q\\\\\" %s %f\"|g' ${PHP_FPM_POOL_CONF}"
 fi
-cat /etc/php-fpm.d/www.conf |grep access.f
 grep -q "^access\.format = \"\[%{%d-%b-%Y:%H:%M:%S}t\] %R - \\\\\"%m %r%Q%q\\\\\" %s %f\"$" "${PHP_FPM_POOL_CONF}"
 if [ "$( grep -c '^access\.format[[:space:]]*=' "${PHP_FPM_POOL_CONF}" )" != "1" ]; then
 	exit 1
@@ -154,13 +144,13 @@ fi
 # Set Pool Slow Log
 # slowlog = /path
 if grep -q '^slowlog[[:space:]]*=' "${PHP_FPM_POOL_CONF}"; then
-	run "sed -i'' 's|slowlog[[:space:]]*=.*$|slowlog = ${PHP_FPM_POOL_LOG_SLOW}|g' ${PHP_FPM_POOL_CONF}"
+	run "sed -i'' 's|slowlog[[:space:]]*=.*$|slowlog = ${MY_LOG_FILE_SLOW}|g' ${PHP_FPM_POOL_CONF}"
 elif grep -q '^;slowlog[[:space:]]*=' "${PHP_FPM_POOL_CONF}"; then
-	run "sed -i'' 's|;slowlog[[:space:]]*=.*$|slowlog = ${PHP_FPM_POOL_LOG_SLOW}|g' ${PHP_FPM_POOL_CONF}"
+	run "sed -i'' 's|;slowlog[[:space:]]*=.*$|slowlog = ${MY_LOG_FILE_SLOW}|g' ${PHP_FPM_POOL_CONF}"
 else
-	run "sed -i'' 's|\[www\]|[www]\nslowlog = ${PHP_FPM_POOL_LOG_SLOW}|g' ${PHP_FPM_POOL_CONF}"
+	run "sed -i'' 's|\[www\]|[www]\nslowlog = ${MY_LOG_FILE_SLOW}|g' ${PHP_FPM_POOL_CONF}"
 fi
-grep -q "^slowlog = ${PHP_FPM_POOL_LOG_SLOW}$" "${PHP_FPM_POOL_CONF}"
+grep -q "^slowlog = ${MY_LOG_FILE_SLOW}$" "${PHP_FPM_POOL_CONF}"
 if [ "$( grep -c '^slowlog[[:space:]]*=' "${PHP_FPM_POOL_CONF}" )" != "1" ]; then
 	exit 1
 fi
@@ -182,13 +172,13 @@ fi
 # Set Pool Error Log
 # php_admin_value[error_log] = /path
 if grep -q '^php_admin_value\[error_log\][[:space:]]*=' "${PHP_FPM_POOL_CONF}"; then
-	run "sed -i'' 's|php_admin_value\[error_log\][[:space:]]*=.*$|php_admin_value[error_log] = ${PHP_FPM_POOL_LOG_ERR}|g' ${PHP_FPM_POOL_CONF}"
+	run "sed -i'' 's|php_admin_value\[error_log\][[:space:]]*=.*$|php_admin_value[error_log] = ${MY_LOG_FILE_ERR}|g' ${PHP_FPM_POOL_CONF}"
 elif grep -q '^;php_admin_value\[error_log\][[:space:]]*=' "${PHP_FPM_POOL_CONF}"; then
-	run "sed -i'' 's|;php_admin_value\[error_log\][[:space:]]*=.*$|php_admin_value[error_log] = ${PHP_FPM_POOL_LOG_ERR}|g' ${PHP_FPM_POOL_CONF}"
+	run "sed -i'' 's|;php_admin_value\[error_log\][[:space:]]*=.*$|php_admin_value[error_log] = ${MY_LOG_FILE_ERR}|g' ${PHP_FPM_POOL_CONF}"
 else
-	run "sed -i'' 's|\[www\]|[www]\nphp_admin_value[error_log] = ${PHP_FPM_POOL_LOG_ERR}|g' ${PHP_FPM_POOL_CONF}"
+	run "sed -i'' 's|\[www\]|[www]\nphp_admin_value[error_log] = ${MY_LOG_FILE_ERR}|g' ${PHP_FPM_POOL_CONF}"
 fi
-grep -q "^php_admin_value\[error_log\] = ${PHP_FPM_POOL_LOG_ERR}$" "${PHP_FPM_POOL_CONF}"
+grep -q "^php_admin_value\[error_log\] = ${MY_LOG_FILE_ERR}$" "${PHP_FPM_POOL_CONF}"
 if [ "$( grep -c '^php_admin_value\[error_log\][[:space:]]*=' "${PHP_FPM_POOL_CONF}" )" != "1" ]; then
 	exit 1
 fi
@@ -290,29 +280,30 @@ grep -q '^listen = 0.0.0.0:9000$' "${PHP_FPM_POOL_CONF}"
 if [ "$( grep -c '^listen[[:space:]]*=' "${PHP_FPM_POOL_CONF}" )" != "1" ]; then
 	exit 1
 fi
-
+cat "${PHP_FPM_POOL_CONF}"
 
 
 ###
 ### Create Log files
 ###
-if [ ! -d "${PHP_FPM_LOG_DIR}" ]; then
-	run "mkdir -p ${PHP_FPM_LOG_DIR}"
+if [ ! -d "${MY_LOG_DIR}" ]; then
+	run "mkdir -p ${MY_LOG_DIR}"
 fi
-if [ ! -f "${PHP_LOG_XDEBUG}" ]; then
-	touch "${PHP_LOG_XDEBUG}"
+if [ ! -f "${MY_LOG_FILE_ACC}" ]; then
+	touch "${MY_LOG_FILE_ACC}"
 fi
-if [ ! -f "${PHP_FPM_LOG_ERR}" ]; then
-	touch "${PHP_FPM_LOG_ERR}"
+if [ ! -f "${MY_LOG_FILE_ERR}" ]; then
+	touch "${MY_LOG_FILE_ERR}"
 fi
-if [ ! -f "${PHP_FPM_POOL_LOG_ERR}" ]; then
-	touch "${PHP_FPM_POOL_LOG_ERR}"
+if [ ! -f "${MY_LOG_FILE_SLOW}" ]; then
+	touch "${MY_LOG_FILE_SLOW}"
 fi
-if [ ! -f "${PHP_FPM_POOL_LOG_ACC}" ]; then
-	touch "${PHP_FPM_POOL_LOG_ACC}"
+if [ ! -f "${MY_LOG_FILE_FPM_ERR}" ]; then
+	touch "${MY_LOG_FILE_FPM_ERR}"
 fi
-if [ ! -f "${PHP_FPM_POOL_LOG_SLOW}" ]; then
-	touch "${PHP_FPM_POOL_LOG_SLOW}"
+if [ ! -f "${MY_LOG_FILE_XDEBUG}" ]; then
+	touch "${MY_LOG_FILE_XDEBUG}"
 fi
-run "chmod 0777 ${PHP_FPM_LOG_DIR}"
-run "chmod -R 0666 ${PHP_FPM_LOG_DIR}/*"
+run "chmod 0755 ${MY_LOG_DIR}"
+run "chmod -R 0644 ${MY_LOG_DIR}/*"
+run "chown -R ${MY_USER}:${MY_GROUP} ${MY_LOG_DIR}"
