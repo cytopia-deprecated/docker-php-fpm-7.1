@@ -202,37 +202,37 @@ if ! set | grep '^DOCKER_LOGS_ERROR=' >/dev/null 2>&1 || [ "${DOCKER_LOGS_ERROR}
 	if [ -L "${MY_LOG_FILE_ERR}" ]; then
 		run "rm -f ${MY_LOG_FILE_ERR}"
 	fi
-	if [ -L "${MY_LOG_FILE_POOL_ERR}" ]; then
-		run "rm -f ${MY_LOG_FILE_POOL_ERR}"
+	if [ -L "${MY_LOG_FILE_FPM_ERR}" ]; then
+		run "rm -f ${MY_LOG_FILE_FPM_ERR}"
 	fi
-	if [ -L "${MY_LOG_FILE_POOL_SLOW}" ]; then
-		run "rm -f ${MY_LOG_FILE_POOL_SLOW}"
+	if [ -L "${MY_LOG_FILE_SLOW}" ]; then
+		run "rm -f ${MY_LOG_FILE_SLOW}"
 	fi
 
 	# Create files if not exists
 	if [ ! -f "${MY_LOG_FILE_ERR}" ]; then
 		run "touch ${MY_LOG_FILE_ERR}"
 	fi
-	if [ ! -f "${MY_LOG_FILE_POOL_ERR}" ]; then
-		run "touch ${MY_LOG_FILE_POOL_ERR}"
+	if [ ! -f "${MY_LOG_FILE_FPM_ERR}" ]; then
+		run "touch ${MY_LOG_FILE_FPM_ERR}"
 	fi
-	if [ ! -f "${MY_LOG_FILE_POOL_SLOW}" ]; then
-		run "touch ${MY_LOG_FILE_POOL_SLOW}"
+	if [ ! -f "${MY_LOG_FILE_SLOW}" ]; then
+		run "touch ${MY_LOG_FILE_SLOW}"
 	fi
 
 	# Fix permissions
 	run "chmod 0664 ${MY_LOG_FILE_ERR}"
-	run "chmod 0664 ${MY_LOG_FILE_POOL_ERR}"
-	run "chmod 0664 ${MY_LOG_FILE_POOL_SLOW}"
+	run "chmod 0664 ${MY_LOG_FILE_FPM_ERR}"
+	run "chmod 0664 ${MY_LOG_FILE_SLOW}"
 	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_ERR}"
-	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_POOL_ERR}"
-	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_POOL_SLOW}"
+	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_FPM_ERR}"
+	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_SLOW}"
 
 elif [ "${DOCKER_LOGS_ERROR}" = "1" ]; then
 	log "info" "Logging errors to docker logs"
 	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_ERR}"
-	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_POOL_ERR}"
-	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_POOL_SLOW}"
+	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_FPM_ERR}"
+	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_SLOW}"
 else
 	log "err" "Invalid choice for \$DOCKER_LOGS_ERROR"
 	exit 1
@@ -258,22 +258,22 @@ if ! set | grep '^DOCKER_LOGS_ACCESS=' >/dev/null 2>&1 || [ "${DOCKER_LOGS_ACCES
 	fi
 
 	# Delete left-over symlinks from previous run (if docker-logs was enabled)
-	if [ -L "${MY_LOG_FILE_POOL_ACC}" ]; then
-		run "rm -f ${MY_LOG_FILE_POOL_ACC}"
+	if [ -L "${MY_LOG_FILE_ACC}" ]; then
+		run "rm -f ${MY_LOG_FILE_ACC}"
 	fi
 
 	# Create files if not exists
-	if [ ! -f "${MY_LOG_FILE_POOL_ACC}" ]; then
-		run "touch ${MY_LOG_FILE_POOL_ACC}"
+	if [ ! -f "${MY_LOG_FILE_ACC}" ]; then
+		run "touch ${MY_LOG_FILE_ACC}"
 	fi
 
 	# Fix permissions
-	run "chmod 0664 ${MY_LOG_FILE_POOL_ACC}"
-	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_POOL_ACC}"
+	run "chmod 0664 ${MY_LOG_FILE_ACC}"
+	run "chown ${MY_USER}:${MY_GROUP} ${MY_LOG_FILE_ACC}"
 
 elif [ "${DOCKER_LOGS_ACCESS}" = "1" ]; then
 	log "info" "Logging access to docker logs"
-	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_POOL_ACC}"
+	run "ln -sf /proc/self/fd/2 ${MY_LOG_FILE_ACC}"
 else
 	log "err" "Invalid choice for \$DOCKER_LOGS_ACCESS"
 	exit 1
@@ -424,8 +424,8 @@ else
 		log "info" "Setting PHP: xdebug.remote_host=${PHP_XDEBUG_REMOTE_HOST}"
 		run "echo 'xdebug.remote_host=${PHP_XDEBUG_REMOTE_HOST}' >> ${XDEBUG_CONFIG}"
 
-		log "info" "Setting PHP: xdebug.remote_log=\"/var/log/php-fpm/xdebug.log\""
-		run "echo 'xdebug.remote_log=\"/var/log/php-fpm/xdebug.log\"' >> ${XDEBUG_CONFIG}"
+		log "info" "Setting PHP: xdebug.remote_log=\"${MY_LOG_FILE_XDEBUG}\""
+		run "echo 'xdebug.remote_log=\"${MY_LOG_FILE_XDEBUG}\"' >> ${XDEBUG_CONFIG}"
 
 
 	# ---- 2/3 Disabled ----

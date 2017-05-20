@@ -1,6 +1,6 @@
-##
-## PHP-FPM 7.1
-##
+###
+### PHP-FPM 7.1
+###
 FROM centos:7
 MAINTAINER "cytopia" <cytopia@everythingcli.org>
 
@@ -21,28 +21,21 @@ LABEL \
 ###
 
 # User/Group
-ENV MY_USER="devilbox"
-ENV MY_GROUP="devilbox"
-ENV MY_UID="1000"
-ENV MY_GID="1000"
+ENV MY_USER="devilbox" \
+	MY_GROUP="devilbox" \
+	MY_UID="1000" \
+	MY_GID="1000"
 
 # User PHP config directories
 ENV MY_CFG_DIR_PHP_CUSTOM="/etc/php-custom.d"
 
-# Log files
-ENV MY_LOG_DIR="/var/log/php"
-ENV MY_LOG_FILE_ERR="${MY_LOG_DIR}/php-fpm.err"
-ENV MY_LOG_FILE_XDEBUG="${MY_LOG_DIR}/xdebug.log"
-ENV MY_LOG_FILE_POOL_ACC="${MY_LOG_DIR}/www-access.log"
-ENV MY_LOG_FILE_POOL_ERR="${MY_LOG_DIR}/www-error.log"
-ENV MY_LOG_FILE_POOL_SLOW="${MY_LOG_DIR}/www-slow.log"
-
-ENV PHP_FPM_LOG_DIR="/var/log/php-fpm"
-ENV PHP_FPM_POOL_LOG_ERR="/var/log/php-fpm/www-error.log"
-ENV PHP_FPM_POOL_LOG_ACC="/var/log/php-fpm/www-access.log"
-ENV PHP_FPM_POOL_LOG_SLOW="/var/log/php-fpm/www-slow.log"
-ENV PHP_FPM_LOG_ERR="/var/log/php-fpm/php-fpm.err"
-ENV PHP_LOG_XDEBUG="/var/log/php-fpm/xdebug.log"
+# Log Files
+ENV MY_LOG_DIR="/var/log/php" \
+	MY_LOG_FILE_XDEBUG="/var/log/php/xdebug.log" \
+	MY_LOG_FILE_ACC="/var/log/php/www-access.log" \
+	MY_LOG_FILE_ERR="/var/log/php/www-error.log" \
+	MY_LOG_FILE_SLOW="/var/log/php/www-slow.log" \
+	MY_LOG_FILE_FPM_ERR="/var/log/php/php-fpm.err"
 
 
 ###
@@ -109,9 +102,9 @@ RUN yum -y update && yum -y install \
 	yum clean metadata && \
 	yum clean all
 
-##
-## Install Tools
-##
+###
+### Install Tools
+###
 RUN yum -y update && yum -y install \
 	bind-utils \
 	which \
@@ -130,50 +123,43 @@ RUN \
 	mv composer.phar /usr/local/bin/composer
 
 RUN \
-	git clone https://github.com/drush-ops/drush.git /usr/local/src/drush && \
-	cd /usr/local/src/drush && \
-	git checkout 8.1.11 && \
-	composer --no-interaction --no-progress install && \
+	mkdir -p /usr/local/src && \
+	chown ${MY_USER}:${MY_GROUP} /usr/local/src && \
+	su - ${MY_USER} -c 'git clone https://github.com/drush-ops/drush.git /usr/local/src/drush' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/drush && git checkout 8.1.11' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/drush && composer install --no-interaction --no-progress' && \
 	ln -s /usr/local/src/drush/drush /usr/local/bin/drush
 
-RUN \
-	curl https://drupalconsole.com/installer -L -o drupal.phar && \
-	mv drupal.phar /usr/local/bin/drupal && \
-	chmod +x /usr/local/bin/drupal
 
-RUN \
-	rm -rf /root/.composer
-
-
-##
-## Bootstrap Scipts
-##
+###
+### Bootstrap Scipts
+###
 COPY ./scripts/docker-install.sh /
 COPY ./scripts/docker-entrypoint.sh /
 COPY ./scripts/bash-profile /etc/bash_profile
 
 
-##
-## Install
-##
+###
+### Install
+###
 RUN /docker-install.sh
 
 
-##
-## Ports
-##
+###
+### Ports
+###
 EXPOSE 9000
 
 
-##
-## Volumes
-##
+###
+### Volumes
+###
 VOLUME /var/log/php
 VOLUME /etc/php-custom.d
 VOLUME /var/mail
 
 
-##
-## Entrypoint
-##
+###
+### Entrypoint
+###
 ENTRYPOINT ["/docker-entrypoint.sh"]

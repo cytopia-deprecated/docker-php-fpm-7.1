@@ -28,7 +28,11 @@ MY_VERSION="$( grep 'image=".*"' "${CWD}/Dockerfile" | grep -Eo '[.0-9]+' )"
 MY_CONF_DIR="$( mktemp -d )"
 MY_SOCK_DIR="$( mktemp -d )"
 MY_MAIL_DIR="$( mktemp -d )"
-
+MY_HTML_DIR="$( mktemp -d )"
+chmod 0777 "${MY_CONF_DIR}"
+chmod 0777 "${MY_SOCK_DIR}"
+chmod 0777 "${MY_MAIL_DIR}"
+chmod 0777 "${MY_HTML_DIR}"
 
 ################################################################################
 ###
@@ -102,9 +106,18 @@ recreate_dirs() {
 	if [ -d "${MY_MAIL_DIR}" ]; then
 		rm -rf "${MY_MAIL_DIR}" || true
 	fi
+	if [ -d "${MY_HTML_DIR}" ]; then
+		rm -rf "${MY_HTML_DIR}" || true
+	fi
 	MY_CONF_DIR="$( mktemp -d )"
 	MY_SOCK_DIR="$( mktemp -d )"
 	MY_MAIL_DIR="$( mktemp -d )"
+	MY_HTML_DIR="$( mktemp -d )"
+
+	chmod 0777 "${MY_CONF_DIR}"
+	chmod 0777 "${MY_SOCK_DIR}"
+	chmod 0777 "${MY_MAIL_DIR}"
+	chmod 0777 "${MY_HTML_DIR}"
 }
 
 docker_start() {
@@ -130,6 +143,9 @@ docker_exec_false() {
 docker_stop() {
 	run "docker stop $( docker_id )"
 }
+docker_logs() {
+	run "docker logs $( docker_id )"
+}
 docker_id() {
 	docker ps | grep "${MY_DOCKER_NAME}" | awk '{print $1}'
 }
@@ -146,6 +162,20 @@ docker_start_mysql() {
 }
 docker_stop_mysql() {
 	run "docker stop $( docker ps | grep 'mysql' | awk '{print $1}' )"
+}
+docker_start_httpd() {
+	_args="${1}"
+	run "docker run -d --rm ${_args} --name httpd cytopia/nginx-stable"
+	wait_for 20
+	if [ "${DOCKER_LOGS}" = "1" ]; then
+		run "docker logs $( docker ps | grep 'httpd' | awk '{print $1}' )"
+	fi
+	if [ "${DOCKER_PS}" = "1" ]; then
+		run "docker ps"
+	fi
+}
+docker_stop_httpd() {
+	run "docker stop $( docker ps | grep 'httpd' | awk '{print $1}' )"
 }
 
 
@@ -294,4 +324,50 @@ run "ls -lap ${MY_MAIL_DIR}/"
 run "cat ${MY_MAIL_DIR}/devilbox"
 # Test for mail
 run "grep 'test-mail' ${MY_MAIL_DIR}/devilbox"
+docker_stop
+
+
+
+############################################################
+### [09] Test File Logs
+############################################################
+print_h1 "[09]   T E S T   F I L E   L O G S"
+
+recreate_dirs
+docker_start "-p 9000 -v ${MY_HTML_DIR}:/var/www/html -e DEBUG_COMPOSE_ENTRYPOINT=${DEBUG} -e DOCKER_LOGS_ERROR=0 -e DOCKER_LOGS_ACCESS=0 -e DOCKER_LOGS_XDEBUG=0"
+docker_start_httpd "-p 80:80 -v ${MY_HTML_DIR}:/var/www/html -e PHP_FPM_ENABLE=1 -e PHP_FPM_SERVER_ADDR=${MY_DOCKER_NAME} -e PHP_FPM_SERVER_PORT=9000 --link ${MY_DOCKER_NAME} -e DEBUG_COMPOSE_ENTRYPOINT=${DEBUG}"
+
+# Produce PHP error
+echo "<?php echo echo include" > "${MY_HTML_DIR}/index.php"
+run "curl localhost | grep 'syntax error'"
+# Check logs (something must be in there)
+docker_exec "ls -lap /var/log/php/"
+docker_exec "find /var/log/php/ -type f -exec cat {} \\; | grep 'syntax error'"
+# Check docker logs
+docker_logs
+
+docker_stop_httpd
+docker_stop
+
+
+
+############################################################
+### [10] Test Docker Logs
+############################################################
+print_h1 "[10]   T E S T   D O C K E R   L O G S"
+
+recreate_dirs
+docker_start "-p 9000 -v ${MY_HTML_DIR}:/var/www/html -e DEBUG_COMPOSE_ENTRYPOINT=${DEBUG} -e DOCKER_LOGS_ERROR=1 -e DOCKER_LOGS_ACCESS=1 -e DOCKER_LOGS_XDEBUG=1"
+docker_start_httpd "-p 80:80 -v ${MY_HTML_DIR}:/var/www/html -e PHP_FPM_ENABLE=1 -e PHP_FPM_SERVER_ADDR=${MY_DOCKER_NAME} -e PHP_FPM_SERVER_PORT=9000 --link ${MY_DOCKER_NAME} -e DEBUG_COMPOSE_ENTRYPOINT=${DEBUG}"
+
+# Produce PHP error
+echo "<?php echo echo include" > "${MY_HTML_DIR}/index.php"
+run "curl localhost | grep 'syntax error'"
+# Check logs (nothing should be in there)
+docker_exec "ls -lap /var/log/php/"
+docker_exec_false "find /var/log/php/ -type f -exec cat {} \\; | grep 'syntax error'"
+# Check docker logs
+docker_logs
+
+docker_stop_httpd
 docker_stop

@@ -139,6 +139,30 @@ $ docker run -i \
     -t cytopia/php-fpm-7.1
 ```
 
+**7. Run with webserver that supports PHP-FPM**
+
+`~/my-host-www` will be the directory that serves the php files (your document root).
+Make sure to mount it into both, php and the webserver.
+
+```shell
+# Start myself
+$ docker run -d \
+    -p 9000 \
+    -v ~/my-host-www:/var/www/html \
+    --name php \
+    -t cytopia/php-fpm-7.1
+
+# Start webserver and link into myself
+$ docker run -d \
+    -p 80:80 \
+    -v ~/my-host-www:/var/www/html \
+    -e PHP_FPM_ENABLE=1 \
+    -e PHP_FPM_SERVER_ADDR=php \
+    -e PHP_FPM_SERVER_PORT=9000 \
+    --link php \
+    -t cytopia/nginx-mainline
+```
+
 ## Modules
 
 **[Version]**
