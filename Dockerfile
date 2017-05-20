@@ -13,7 +13,7 @@ LABEL \
 	image="php-fpm-7.1" \
 	vendor="cytopia" \
 	license="MIT" \
-	build-date="2017-05-16"
+	build-date="2017-05-20"
 
 
 ###
@@ -129,6 +129,11 @@ RUN \
 	su - ${MY_USER} -c 'cd /usr/local/src/drush && git checkout 8.1.11' && \
 	su - ${MY_USER} -c 'cd /usr/local/src/drush && composer install --no-interaction --no-progress' && \
 	ln -s /usr/local/src/drush/drush /usr/local/bin/drush
+
+RUN \
+	curl https://drupalconsole.com/installer -L -o drupal.phar && \
+	mv drupal.phar /usr/local/bin/drupal && \
+	chmod +x /usr/local/bin/drupal
 
 
 ###
