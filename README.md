@@ -1,6 +1,6 @@
 # PHP-FPM 7.1 Docker
 
-<small>**Latest build:** 2017-05-20</small>
+<small>**Latest build:** 2017-05-21</small>
 
 [![Build Status](https://travis-ci.org/cytopia/docker-php-fpm-7.1.svg?branch=master)](https://travis-ci.org/cytopia/docker-php-fpm-7.1) [![](https://images.microbadger.com/badges/version/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/image/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/license/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1")
 
@@ -39,7 +39,6 @@
 | TIMEZONE | string | `UTC` | Set docker OS timezone as well as PHP timezone.<br/>(Example: `Europe/Berlin`) |
 | ENABLE_MAIL | bool | `0` | Allow sending emails. Postfix will be configured for local delivery and all sent mails (even to real domains) will be catched locally. No email will ever go out. They will all be stored in a local `devilbox` account.<br/>Value: `0` or `1` |
 | FORWARD_PORTS_TO_LOCALHOST | string | `` | List of remote ports to forward to `127.0.0.1`.<br/>Format: `<local-port>:<remote-host>:<remote-port>`. You can separate multiple entries by comma.<br/>Example: `3306:mysqlhost:3306, 6379:192.0.1.1:6379` |
-| MYSQL_SOCKET_PATH | string | `` | Full socket path where the MySQL socket has been mounted on this docker.<br/>This is recommended to adjust if $MOUNT_MYSQL_SOCKET_TO_LOCALDISK is turned on.<br/><br/>Example: `/tmp/mysql/mysqld.sock` |
 | PHP_XDEBUG_ENABLE | bool | `0` | Enable Xdebug.<br/>Value: `0` or `1` |
 | PHP_XDEBUG_REMOTE_PORT | int | `9000` | The port on your Host (where you run the IDE/editor to which xdebug should connect.) |
 | PHP_XDEBUG_REMOTE_HOST | string | `` | The IP address of your Host (where you run the IDE/editor to which xdebug should connect).<br/>This is required if $PHP_DEBUG_ENABLE is turned on. |
