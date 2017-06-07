@@ -1,6 +1,6 @@
 # PHP-FPM 7.1 Docker
 
-<small>**Latest build:** 2017-05-22</small>
+<small>**Latest build:** 2017-06-07</small>
 
 [![Build Status](https://travis-ci.org/cytopia/docker-php-fpm-7.1.svg?branch=master)](https://travis-ci.org/cytopia/docker-php-fpm-7.1) [![](https://images.microbadger.com/badges/version/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/image/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/license/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1")
 
@@ -166,10 +166,10 @@ $ docker run -d \
 
 **[Version]**
 
-PHP 7.1.5 (cli) (built: May  9 2017 18:30:17) ( NTS )
+PHP 7.1.6 (cli) (built: Jun  7 2017 12:15:54) ( NTS )
 Copyright (c) 1997-2017 The PHP Group
 Zend Engine v3.1.0, Copyright (c) 1998-2017 Zend Technologies
-    with Zend OPcache v7.1.5, Copyright (c) 1999-2017, by Zend Technologies
+    with Zend OPcache v7.1.6, Copyright (c) 1999-2017, by Zend Technologies
 
 **[PHP Modules]**
 
@@ -185,7 +185,7 @@ Xdebug, Zend OPcache
 |----------------|---------|
 | composer       | 1.4.2 |
 | drush          | 8.1.11 |
-| drupal-console | 1.0.0-rc19 |
+| drupal-console | 1.0.0-rc21 |
 | git            | 1.8.3.1 |
-| node           | 6.10.2 |
+| node           | 6.10.3 |
 | npm            | 3.10.10 |
