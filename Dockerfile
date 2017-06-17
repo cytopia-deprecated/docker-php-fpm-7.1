@@ -108,6 +108,7 @@ RUN yum -y update && yum -y install \
 ###
 RUN yum -y update && yum -y install \
 	mysql \
+	postgresql \
 	bind-utils \
 	which \
 	git \
