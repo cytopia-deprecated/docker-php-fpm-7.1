@@ -5,3 +5,38 @@ alias ll='ls -alp --color=always --group-directories-first'
 
 # Nice PS1
 PS1="\[\e[0;31m\]$(whoami)\[\e[0m\]@\[\e[0;36m\]php-$(php -v|head -1|grep -Eo '[0-9.]+'|head -1)\[\e[0m\] in \[\e[0;34m\]\w \[\e[0m\]\$ "
+
+
+echo
+echo "--------------------------------------------------------------------------------"
+echo "                       _            _ _ _               "
+echo "                      | |          (_) | |              "
+echo "                    __| | _____   ___| | |__   _____  __"
+echo "                   / _\` |/ _ \\ \\ / / | | '_ \\ / _ \\ \\/ /"
+echo "                  | (_| |  __/\\ V /| | | |_) | (_) >  < "
+echo "                   \\__,_|\\___| \\_/ |_|_|_.__/ \\___/_/\\_\\"
+echo "                                                        "
+echo "                              http://devilbox.org"
+echo
+echo
+echo "              | Available Tools  | Project website              |"
+echo "              |------------------|------------------------------|"
+echo "              | composer         | https://getcomposer.org      |"
+echo "              | drush            | http://www.drush.org         |"
+echo "              | drupal-console   | https://drupalconsole.com    |"
+echo "              | git              | https://git-scm.com          |"
+echo "              | node             | https://nodejs.org           |"
+echo "              | npm              | https://www.npmjs.com        |"
+echo "              | mysqldump-secure | https://mysqldump-secure.org |"
+echo "              | wpcli            | https://wp-cli.org           |"
+echo
+echo
+echo "              | Available Dirs   | Description                  |"
+echo "              |------------------|------------------------------|"
+echo "              | /shared/httpd    | Project base directory       |"
+echo "              | /shared/backups  | Backup directory             |"
+echo "              | /var/mail        | Email directory              |"
+echo "              | /var/log         | Log file directory           |"
+echo
+echo "--------------------------------------------------------------------------------"
+echo
