@@ -579,9 +579,11 @@ run "chown -R ${MY_USER}:${MY_GROUP} /home/${MY_USER}"
 if [ -d "/shared/httpd" ]; then
 	run "chown ${MY_USER}:${MY_GROUP} /shared/httpd"
 fi
-# mysqldump-secure
+# Backup dirs
 run "mkdir -p /shared/backups/mysql"
+run "mkdir -p /shared/backups/pgsql"
 run "chown -R ${MY_USER}:${MY_GROUP} /shared/backups"
+# mysqldump-secure
 run "chown ${MY_USER}:${MY_GROUP} /var/log/mysqldump-secure.log"
 run "chown ${MY_USER}:${MY_GROUP} /etc/mysqldump-secure.conf"
 run "chown ${MY_USER}:${MY_GROUP} /etc/mysqldump-secure.cnf"
