@@ -55,6 +55,14 @@ RUN \
 	yum-config-manager --enable remi-php71 && \
 	rpm -ivh https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm && \
 	yum-config-manager --enable pgdg96 && \
+	( \
+		echo "[mongodb-org-3.2]"; \
+		echo "name=MongoDB Repository"; \
+		echo "baseurl=https://repo.mongodb.org/yum/redhat/7Server/mongodb-org/3.2/x86_64/"; \
+		echo "gpgcheck=1"; \
+		echo "enabled=1"; \
+		echo "gpgkey=https://www.mongodb.org/static/pgp/server-3.2.asc"; \
+	) > /etc/yum.repos.d/mongodb.repo && \
 	yum clean all
 
 RUN yum -y update && yum -y install \
@@ -111,6 +119,7 @@ RUN yum -y update && yum -y install \
 RUN yum -y update && yum -y install \
 	mysql \
 	postgresql96 \
+	mongodb-org-tools \
 	bind-utils \
 	which \
 	git \

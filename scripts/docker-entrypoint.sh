@@ -582,6 +582,7 @@ fi
 # Backup dirs
 run "mkdir -p /shared/backups/mysql"
 run "mkdir -p /shared/backups/pgsql"
+run "mkdir -p /shared/backups/mongo"
 run "chown -R ${MY_USER}:${MY_GROUP} /shared/backups"
 # mysqldump-secure
 run "chown ${MY_USER}:${MY_GROUP} /var/log/mysqldump-secure.log"

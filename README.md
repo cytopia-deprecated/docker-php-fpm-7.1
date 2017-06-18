@@ -194,3 +194,7 @@ Xdebug, Zend OPcache
 | [npm](https://www.npmjs.com)           | 3.10.10 |
 | [mysqldump-secure](https://mysqldump-secure.org) | 0.16.3 |
 | [wp-cli](https://wp-cli.org)           | 1.2.1 |
+
+**[Misc Tools]**
+
+mongodump mongoexport mongofiles mongoimport mongooplog mongoperf mongorestore mongostat mongotop msql2mysql mysql mysqlaccess mysqladmin mysqlbinlog mysqlcheck mysqldump mysql_find_rows mysqlimport mysqlshow mysqlslap mysql_waitpid pg_basebackup pg_dump pg_dumpall pg_restore psql
