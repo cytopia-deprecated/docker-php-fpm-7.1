@@ -13,7 +13,7 @@ LABEL \
 	image="php-fpm-7.1" \
 	vendor="cytopia" \
 	license="MIT" \
-	build-date="2017-06-17"
+	build-date="2017-06-18"
 
 
 ###
@@ -53,6 +53,8 @@ RUN \
 	yum-config-manager --disable remi-php56 && \
 	yum-config-manager --disable remi-php70 && \
 	yum-config-manager --enable remi-php71 && \
+	rpm -ivh https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm && \
+	yum-config-manager --enable pgdg96 && \
 	yum clean all
 
 RUN yum -y update && yum -y install \
@@ -108,7 +110,7 @@ RUN yum -y update && yum -y install \
 ###
 RUN yum -y update && yum -y install \
 	mysql \
-	postgresql \
+	postgresql96 \
 	bind-utils \
 	which \
 	git \
