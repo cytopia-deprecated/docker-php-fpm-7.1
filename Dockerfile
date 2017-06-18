@@ -177,6 +177,9 @@ RUN \
 	sed -i'' 's/^LOG_CHMOD=.*/LOG_CHMOD="0644"/g' /etc/mysqldump-secure.conf && \
 	sed -i'' 's/^NAGIOS_LOG=.*/NAGIOS_LOG=0/g' /etc/mysqldump-secure.conf
 
+RUN \
+	curl -LsS https://symfony.com/installer -o /usr/local/bin/symfony && \
+	chmod a+x /usr/local/bin/symfony
 
 ###
 ### Configure PS1

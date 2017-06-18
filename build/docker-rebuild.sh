@@ -67,8 +67,9 @@ BIN_GIT="$(     docker exec my_tmp_${NAME} git              --version 2>/dev/nul
 BIN_NODE="$(    docker exec my_tmp_${NAME} node             --version 2>/dev/null | grep -Eo '[0-9.]+' | head -1 )"
 BIN_NPM="$(     docker exec my_tmp_${NAME} npm              --version 2>/dev/null | grep -Eo '[0-9.]+' | head -1 )"
 BIN_MDS="$(     docker exec my_tmp_${NAME} mysqldump-secure --version 2>/dev/null | grep -Eo '[0-9.]+' | head -1 )"
+BIN_SYM="$(     docker exec my_tmp_${NAME} symfony --version 2>/dev/null | grep -Eo '[0-9.]+' | head -1 )"
 BIN_WPC="$(     docker exec my_tmp_${NAME} wp --allow-root  --version 2>/dev/null | grep -Eo '[0-9.]+' | head -1 )"
-BIN_MISC="$(    docker exec my_tmp_${NAME} ls /usr/bin/ | grep -E '(mongo|mysql|psql|pg_)' | sort -u | xargs )"
+BIN_MISC="$(    docker exec my_tmp_${NAME} ls /usr/bin/ | grep -E '(mongo|mysql|psql|pg_)' | sort -u | xargs | sed 's/\s/, /g' )"
 docker stop "$(docker ps | grep "my_tmp_${NAME}" | awk '{print $1}')"
 
 PHP_MODULES="$( echo "${PHP_MODULES}" | sed '/^\s*$/d' )"       # remove empty lines
@@ -98,9 +99,10 @@ echo "| [composer](https://getcomposer.org)    | ${BIN_COMP} |"   >> "${CWD}/REA
 echo "| [drush](http://www.drush.org)          | ${BIN_DRUSH} |"  >> "${CWD}/README.md"
 echo "| [drupal-console](https://drupalconsole.com) | ${BIN_DRUSHC} |" >> "${CWD}/README.md"
 echo "| [git](https://git-scm.com)             | ${BIN_GIT} |"    >> "${CWD}/README.md"
+echo "| [mysqldump-secure](https://mysqldump-secure.org) | ${BIN_MDS} |"  >> "${CWD}/README.md"
 echo "| [node](https://nodejs.org)             | ${BIN_NODE} |"   >> "${CWD}/README.md"
 echo "| [npm](https://www.npmjs.com)           | ${BIN_NPM} |"    >> "${CWD}/README.md"
-echo "| [mysqldump-secure](https://mysqldump-secure.org) | ${BIN_MDS} |"  >> "${CWD}/README.md"
+echo "| [symfony installer](https://github.com/symfony/symfony-installer) | ${BIN_SYM} |" >> "${CWD}/README.md"
 echo "| [wp-cli](https://wp-cli.org)           | ${BIN_WPC} |"    >> "${CWD}/README.md"
 echo ""                                   >> "${CWD}/README.md"
 echo "**[Misc Tools]**"                   >> "${CWD}/README.md"

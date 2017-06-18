@@ -25,9 +25,10 @@ echo "              | composer         | https://getcomposer.org      |"
 echo "              | drush            | http://www.drush.org         |"
 echo "              | drupal-console   | https://drupalconsole.com    |"
 echo "              | git              | https://git-scm.com          |"
+echo "              | mysqldump-secure | https://mysqldump-secure.org |"
 echo "              | node             | https://nodejs.org           |"
 echo "              | npm              | https://www.npmjs.com        |"
-echo "              | mysqldump-secure | https://mysqldump-secure.org |"
+echo "              | symfony installer| gh: symfony/symfony-installer|"
 echo "              | wpcli            | https://wp-cli.org           |"
 echo
 echo

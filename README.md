@@ -190,11 +190,12 @@ Xdebug, Zend OPcache
 | [drush](http://www.drush.org)          | 8.1.12 |
 | [drupal-console](https://drupalconsole.com) | 1.0.0-rc21 |
 | [git](https://git-scm.com)             | 1.8.3.1 |
+| [mysqldump-secure](https://mysqldump-secure.org) | 0.16.3 |
 | [node](https://nodejs.org)             | 6.10.3 |
 | [npm](https://www.npmjs.com)           | 3.10.10 |
-| [mysqldump-secure](https://mysqldump-secure.org) | 0.16.3 |
+| [symfony installer](https://github.com/symfony/symfony-installer) | 1.5.9 |
 | [wp-cli](https://wp-cli.org)           | 1.2.1 |
 
 **[Misc Tools]**
 
-mongodump mongoexport mongofiles mongoimport mongooplog mongoperf mongorestore mongostat mongotop msql2mysql mysql mysqlaccess mysqladmin mysqlbinlog mysqlcheck mysqldump mysql_find_rows mysqlimport mysqlshow mysqlslap mysql_waitpid pg_basebackup pg_dump pg_dumpall pg_restore psql
+mongodump, mongoexport, mongofiles, mongoimport, mongooplog, mongoperf, mongorestore, mongostat, mongotop, msql2mysql, mysql, mysqlaccess, mysqladmin, mysqlbinlog, mysqlcheck, mysqldump, mysql_find_rows, mysqlimport, mysqlshow, mysqlslap, mysql_waitpid, pg_basebackup, pg_dump, pg_dumpall, pg_restore, psql
