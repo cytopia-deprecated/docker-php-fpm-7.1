@@ -573,8 +573,6 @@ if [ -d "/var/lib/php/session" ]; then
 fi
 run "mkdir -p /var/lib/php/session"
 run "chown -R ${MY_USER}:${MY_GROUP} /var/lib/php/session"
-# Home dir
-run "chown -R ${MY_USER}:${MY_GROUP} /home/${MY_USER}"
 # Data dir
 if [ -d "/shared/httpd" ]; then
 	run "chown ${MY_USER}:${MY_GROUP} /shared/httpd"
@@ -588,6 +586,12 @@ run "chown -R ${MY_USER}:${MY_GROUP} /shared/backups"
 run "chown ${MY_USER}:${MY_GROUP} /var/log/mysqldump-secure.log"
 run "chown ${MY_USER}:${MY_GROUP} /etc/mysqldump-secure.conf"
 run "chown ${MY_USER}:${MY_GROUP} /etc/mysqldump-secure.cnf"
+# CentOS Home dir Fix
+run "mv /home/${MY_USER} /home/${MY_USER}.old"
+run "mkdir /home/${MY_USER}"
+run "mv /home/${MY_USER}.old/.bash* /home/${MY_USER}/"
+run "rm -rf /home/${MY_USER}.old"
+run "chown -R ${MY_USER}:${MY_GROUP} /home/${MY_USER}"
 
 
 ###
