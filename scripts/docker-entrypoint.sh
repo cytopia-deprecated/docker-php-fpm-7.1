@@ -595,13 +595,6 @@ run "chown -R ${MY_USER}:${MY_GROUP} /home/${MY_USER}"
 
 
 ###
-### Nice shell prompt
-###
-run "echo \". /etc/bash_profile\" >> /etc/bashrc"
-
-
-
-###
 ### Start
 ###
 log "info" "Starting $(php-fpm -v 2>&1 | head -1)"

@@ -13,7 +13,7 @@ LABEL \
 	image="php-fpm-7.1" \
 	vendor="cytopia" \
 	license="MIT" \
-	build-date="2017-06-19"
+	build-date="2017-06-20"
 
 
 ###
@@ -181,12 +181,39 @@ RUN \
 	curl -LsS https://symfony.com/installer -o /usr/local/bin/symfony && \
 	chmod a+x /usr/local/bin/symfony
 
+RUN \
+	mkdir -p /usr/local/src && \
+	chown ${MY_USER}:${MY_GROUP} /usr/local/src && \
+	su - ${MY_USER} -c 'git clone https://github.com/laravel/installer /usr/local/src/laravel-installer' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/laravel-installer && git checkout $(git tag | sort -V | tail -1)' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/laravel-installer && composer install' && \
+	ln -s /usr/local/src/laravel-installer/laravel /usr/local/bin/laravel && \
+	chmod +x /usr/local/bin/laravel
+
+RUN \
+	mkdir -p /usr/local/src && \
+	chown ${MY_USER}:${MY_GROUP} /usr/local/src && \
+	su - ${MY_USER} -c 'git clone https://github.com/phalcon/phalcon-devtools /usr/local/src/phalcon-devtools' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/phalcon-devtools && git checkout $(git tag | grep 'v3.0' | sort -V | tail -1)' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/phalcon-devtools && ./phalcon.sh' && \
+	ln -s /usr/local/src/phalcon-devtools/phalcon.php /usr/local/bin/phalcon && \
+	chmod +x /usr/local/bin/phalcon
+
 ###
 ### Configure PS1
 ###
 RUN \
-	echo ". /etc/bash_profile" >> /home/${MY_USER}/.bashrc && \
-	echo ". /etc/bash_profile" >> /root/.bashrc
+	( \
+		echo "if [ -f /etc/bashrc ]; then"; \
+		echo "    . /etc/bashrc"; \
+		echo "fi"; \
+	) | tee /home/${MY_USER}/.bashrc /root/.bashrc && \
+	( \
+		echo "if [ -f ~/.bashrc ]; then"; \
+		echo "    . ~/.bashrc"; \
+		echo "fi"; \
+	) | tee /home/${MY_USER}/.bash_profile /root/.bash_profile && \
+	echo ". /etc/bash_profile" | tee -a /etc/bashrc
 
 
 ###
