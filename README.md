@@ -1,6 +1,6 @@
 # PHP-FPM 7.1 Docker
 
-<small>**Latest build:** 2017-06-07</small>
+<small>**Latest build:** 2017-06-20</small>
 
 [![Build Status](https://travis-ci.org/cytopia/docker-php-fpm-7.1.svg?branch=master)](https://travis-ci.org/cytopia/docker-php-fpm-7.1) [![](https://images.microbadger.com/badges/version/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/image/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/license/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1")
 
@@ -42,6 +42,9 @@
 | PHP_XDEBUG_ENABLE | bool | `0` | Enable Xdebug.<br/>Value: `0` or `1` |
 | PHP_XDEBUG_REMOTE_PORT | int | `9000` | The port on your Host (where you run the IDE/editor to which xdebug should connect.) |
 | PHP_XDEBUG_REMOTE_HOST | string | `` | The IP address of your Host (where you run the IDE/editor to which xdebug should connect).<br/>This is required if $PHP_DEBUG_ENABLE is turned on. |
+| MYSQL_BACKUP_USER | string | mds default | Username for mysql backups used for bundled [mysqldump-secure](https://mysqldump-secure.org) |
+| MYSQL_BACKUP_PASS | string | mds default | Password for mysql backups used for bundled [mysqldump-secure](https://mysqldump-secure.org) |
+| MYSQL_BACKUP_HOST | string | mds default | Hostname for mysql backups used for bundled [mysqldump-secure](https://mysqldump-secure.org) |
 
 ### Default mount points
 
@@ -183,9 +186,18 @@ Xdebug, Zend OPcache
 
 | tool           | version |
 |----------------|---------|
-| composer       | 1.4.2 |
-| drush          | 8.1.11 |
-| drupal-console | 1.0.0-rc21 |
-| git            | 1.8.3.1 |
-| node           | 6.10.3 |
-| npm            | 3.10.10 |
+| [composer](https://getcomposer.org)    | 1.4.2 |
+| [drupal-console](https://drupalconsole.com) | 1.0.0-rc21 |
+| [drush](http://www.drush.org)          | 8.1.12 |
+| [git](https://git-scm.com)             | 1.8.3.1 |
+| [laravel installer](https://github.com/laravel/installer)     | 1.3.6 |
+| [mysqldump-secure](https://mysqldump-secure.org) | 0.16.3 |
+| [node](https://nodejs.org)             | 6.10.3 |
+| [npm](https://www.npmjs.com)           | 3.10.10 |
+| [phalcon-devtools](https://github.com/phalcon/phalcon-devtools)   | 3.0.5 |
+| [symfony installer](https://github.com/symfony/symfony-installer) | 1.5.9 |
+| [wp-cli](https://wp-cli.org)           | 1.2.1 |
+
+**[Misc Tools]**
+
+mongodump, mongoexport, mongofiles, mongoimport, mongooplog, mongoperf, mongorestore, mongostat, mongotop, msql2mysql, mysql, mysqlaccess, mysqladmin, mysqlbinlog, mysqlcheck, mysqldump, mysql_find_rows, mysqlimport, mysqlshow, mysqlslap, mysql_waitpid, pg_basebackup, pg_dump, pg_dumpall, pg_restore, psql

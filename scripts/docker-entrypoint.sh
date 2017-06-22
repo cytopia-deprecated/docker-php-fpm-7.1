@@ -530,6 +530,35 @@ else
 fi
 
 
+###
+### MySQL Backups
+###
+if ! set | grep '^MYSQL_BACKUP_USER='  >/dev/null 2>&1; then
+	log "info" "\$MYSQL_BACKUP_USER not set for mysqldump-secure."
+	log "info" "Keeping default user"
+else
+	log "info" "\$MYSQL_BACKUP_USER set for mysqldump-secure."
+	log "info" "Changing to '${MYSQL_BACKUP_USER}'"
+	run "sed -i'' 's/^user.*/user = ${MYSQL_BACKUP_USER}/g' /etc/mysqldump-secure.cnf"
+fi
+if ! set | grep '^MYSQL_BACKUP_PASS='  >/dev/null 2>&1; then
+	log "info" "\$MYSQL_BACKUP_PASS not set for mysqldump-secure."
+	log "info" "Keeping default password"
+else
+	log "info" "\$MYSQL_BACKUP_PASS set for mysqldump-secure."
+	log "info" "Changing to '********'"
+	run "sed -i'' 's/^password.*/password = ${MYSQL_BACKUP_PASS}/g' /etc/mysqldump-secure.cnf"
+fi
+if ! set | grep '^MYSQL_BACKUP_HOST='  >/dev/null 2>&1; then
+	log "info" "\$MYSQL_BACKUP_HOST not set for mysqldump-secure."
+	log "info" "Keeping default host"
+else
+	log "info" "\$MYSQL_BACKUP_HOST set for mysqldump-secure."
+	log "info" "Changing to '${MYSQL_BACKUP_HOST}'"
+	run "sed -i'' 's/^host.*/host = ${MYSQL_BACKUP_HOST}/g' /etc/mysqldump-secure.cnf"
+fi
+
+
 
 ###
 ### Fix uid/gid permissions of mounted volumes
@@ -544,19 +573,25 @@ if [ -d "/var/lib/php/session" ]; then
 fi
 run "mkdir -p /var/lib/php/session"
 run "chown -R ${MY_USER}:${MY_GROUP} /var/lib/php/session"
-# Home dir
-run "chown -R ${MY_USER}:${MY_GROUP} /home/${MY_USER}"
 # Data dir
 if [ -d "/shared/httpd" ]; then
 	run "chown ${MY_USER}:${MY_GROUP} /shared/httpd"
 fi
-
-
-###
-### Nice shell prompt
-###
-run "echo \". /etc/bash_profile\" >> /etc/bashrc"
-
+# Backup dirs
+run "mkdir -p /shared/backups/mysql"
+run "mkdir -p /shared/backups/pgsql"
+run "mkdir -p /shared/backups/mongo"
+run "chown -R ${MY_USER}:${MY_GROUP} /shared/backups"
+# mysqldump-secure
+run "chown ${MY_USER}:${MY_GROUP} /var/log/mysqldump-secure.log"
+run "chown ${MY_USER}:${MY_GROUP} /etc/mysqldump-secure.conf"
+run "chown ${MY_USER}:${MY_GROUP} /etc/mysqldump-secure.cnf"
+# CentOS Home dir Fix
+run "mv /home/${MY_USER} /home/${MY_USER}.old"
+run "mkdir /home/${MY_USER}"
+run "mv /home/${MY_USER}.old/.bash* /home/${MY_USER}/"
+run "rm -rf /home/${MY_USER}.old"
+run "chown -R ${MY_USER}:${MY_GROUP} /home/${MY_USER}"
 
 
 ###

@@ -13,7 +13,7 @@ LABEL \
 	image="php-fpm-7.1" \
 	vendor="cytopia" \
 	license="MIT" \
-	build-date="2017-06-07"
+	build-date="2017-06-20"
 
 
 ###
@@ -53,6 +53,16 @@ RUN \
 	yum-config-manager --disable remi-php56 && \
 	yum-config-manager --disable remi-php70 && \
 	yum-config-manager --enable remi-php71 && \
+	rpm -ivh https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm && \
+	yum-config-manager --enable pgdg96 && \
+	( \
+		echo "[mongodb-org-3.4]"; \
+		echo "name=MongoDB Repository"; \
+		echo "baseurl=https://repo.mongodb.org/yum/redhat/7Server/mongodb-org/3.4/x86_64/"; \
+		echo "gpgcheck=1"; \
+		echo "enabled=1"; \
+		echo "gpgkey=https://www.mongodb.org/static/pgp/server-3.4.asc"; \
+	) > /etc/yum.repos.d/mongodb.repo && \
 	yum clean all
 
 RUN yum -y update && yum -y install \
@@ -107,6 +117,9 @@ RUN yum -y update && yum -y install \
 ### Install Tools
 ###
 RUN yum -y update && yum -y install \
+	mysql \
+	postgresql96 \
+	mongodb-org-tools \
 	bind-utils \
 	which \
 	git \
@@ -121,13 +134,15 @@ RUN yum -y update && yum -y install \
 
 RUN \
 	curl -sS https://getcomposer.org/installer | php && \
-	mv composer.phar /usr/local/bin/composer
+	mv composer.phar /usr/local/bin/composer && \
+	composer self-update
 
 RUN \
+	DRUSH_VERSION="$( curl -q https://api.github.com/repos/drush-ops/drush/releases 2>/dev/null | grep tag_name | grep -Eo '\"[0-9.]+\"' | head -1 | sed 's/\"//g' )" && \
 	mkdir -p /usr/local/src && \
 	chown ${MY_USER}:${MY_GROUP} /usr/local/src && \
 	su - ${MY_USER} -c 'git clone https://github.com/drush-ops/drush.git /usr/local/src/drush' && \
-	su - ${MY_USER} -c 'cd /usr/local/src/drush && git checkout 8.1.11' && \
+	v="${DRUSH_VERSION}" su ${MY_USER} -p -c 'cd /usr/local/src/drush && git checkout ${v}' && \
 	su - ${MY_USER} -c 'cd /usr/local/src/drush && composer install --no-interaction --no-progress' && \
 	ln -s /usr/local/src/drush/drush /usr/local/bin/drush
 
@@ -135,6 +150,70 @@ RUN \
 	curl https://drupalconsole.com/installer -L -o drupal.phar && \
 	mv drupal.phar /usr/local/bin/drupal && \
 	chmod +x /usr/local/bin/drupal
+
+RUN \
+	curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+	mv wp-cli.phar /usr/local/bin/wp && \
+	chmod +x /usr/local/bin/wp && \
+	wp cli update
+
+RUN \
+	mkdir -p /usr/local/src && \
+	chown ${MY_USER}:${MY_GROUP} /usr/local/src && \
+	su - ${MY_USER} -c 'git clone https://github.com/cytopia/mysqldump-secure.git /usr/local/src/mysqldump-secure' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/mysqldump-secure && git checkout $(git describe --abbrev=0 --tags)' && \
+	ln -s /usr/local/src/mysqldump-secure/bin/mysqldump-secure /usr/local/bin && \
+	cp /usr/local/src/mysqldump-secure/etc/mysqldump-secure.conf /etc && \
+	cp /usr/local/src/mysqldump-secure/etc/mysqldump-secure.cnf /etc && \
+	touch /var/log/mysqldump-secure.log && \
+	chown ${MY_USER}:${MY_GROUP} /etc/mysqldump-secure.* && \
+	chown ${MY_USER}:${MY_GROUP} /var/log/mysqldump-secure.log && \
+	chmod 0400 /etc/mysqldump-secure.conf && \
+	chmod 0400 /etc/mysqldump-secure.cnf && \
+	chmod 0644 /var/log/mysqldump-secure.log && \
+	sed -i'' 's/^DUMP_DIR=.*/DUMP_DIR="\/shared\/backups\/mysql"/g' /etc/mysqldump-secure.conf && \
+	sed -i'' 's/^DUMP_DIR_CHMOD=.*/DUMP_DIR_CHMOD="0755"/g' /etc/mysqldump-secure.conf && \
+	sed -i'' 's/^DUMP_FILE_CHMOD=.*/DUMP_FILE_CHMOD="0644"/g' /etc/mysqldump-secure.conf && \
+	sed -i'' 's/^LOG_CHMOD=.*/LOG_CHMOD="0644"/g' /etc/mysqldump-secure.conf && \
+	sed -i'' 's/^NAGIOS_LOG=.*/NAGIOS_LOG=0/g' /etc/mysqldump-secure.conf
+
+RUN \
+	curl -LsS https://symfony.com/installer -o /usr/local/bin/symfony && \
+	chmod a+x /usr/local/bin/symfony
+
+RUN \
+	mkdir -p /usr/local/src && \
+	chown ${MY_USER}:${MY_GROUP} /usr/local/src && \
+	su - ${MY_USER} -c 'git clone https://github.com/laravel/installer /usr/local/src/laravel-installer' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/laravel-installer && git checkout $(git tag | sort -V | tail -1)' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/laravel-installer && composer install' && \
+	ln -s /usr/local/src/laravel-installer/laravel /usr/local/bin/laravel && \
+	chmod +x /usr/local/bin/laravel
+
+RUN \
+	mkdir -p /usr/local/src && \
+	chown ${MY_USER}:${MY_GROUP} /usr/local/src && \
+	su - ${MY_USER} -c 'git clone https://github.com/phalcon/phalcon-devtools /usr/local/src/phalcon-devtools' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/phalcon-devtools && git checkout $(git tag | grep 'v3.0' | sort -V | tail -1)' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/phalcon-devtools && ./phalcon.sh' && \
+	ln -s /usr/local/src/phalcon-devtools/phalcon.php /usr/local/bin/phalcon && \
+	chmod +x /usr/local/bin/phalcon
+
+###
+### Configure PS1
+###
+RUN \
+	( \
+		echo "if [ -f /etc/bashrc ]; then"; \
+		echo "    . /etc/bashrc"; \
+		echo "fi"; \
+	) | tee /home/${MY_USER}/.bashrc /root/.bashrc && \
+	( \
+		echo "if [ -f ~/.bashrc ]; then"; \
+		echo "    . ~/.bashrc"; \
+		echo "fi"; \
+	) | tee /home/${MY_USER}/.bash_profile /root/.bash_profile && \
+	echo ". /etc/bash_profile" | tee -a /etc/bashrc
 
 
 ###
