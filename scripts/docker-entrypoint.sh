@@ -174,6 +174,15 @@ else
 		log "err" "\$NEW_GID is not an integer: '${NEW_GID}'"
 		exit 1
 	else
+		if _group_line="$( getent group "${NEW_GID}" )"; then
+			_group_name="$( echo "${_group_line}" | awk -F':' '{print $1}' )"
+			if [ "${_group_name}" != "${MY_GROUP}" ]; then
+				log "warn" "Group with ${NEW_GID} already exists: ${_group_name}"
+				log "info" "Changing GID of ${_group_name} to 9999"
+				run "groupmod -g 9999 ${_group_name}"
+			fi
+		fi
+
 		log "info" "Changing group '${MY_GROUP}' gid to: ${NEW_GID}"
 		run "groupmod -g ${NEW_GID} ${MY_GROUP}"
 	fi
