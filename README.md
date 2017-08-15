@@ -1,6 +1,6 @@
 # PHP-FPM 7.1 Docker
 
-<small>**Latest build:** 2017-08-09</small>
+<small>**Latest build:** 2017-08-15</small>
 
 [![Build Status](https://travis-ci.org/cytopia/docker-php-fpm-7.1.svg?branch=master)](https://travis-ci.org/cytopia/docker-php-fpm-7.1) [![](https://images.microbadger.com/badges/version/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/image/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1") [![](https://images.microbadger.com/badges/license/cytopia/php-fpm-7.1.svg)](https://microbadger.com/images/cytopia/php-fpm-7.1 "php-fpm-7.1")
 
@@ -187,13 +187,14 @@ Xdebug, Zend OPcache
 
 | tool           | version |
 |----------------|---------|
-| [composer](https://getcomposer.org)    | 1.5.0 |
+| [awesome-ci](https://github.com/cytopia/awesome-ci)  | 0.9 |
+| [composer](https://getcomposer.org)    | 1.5.1 |
 | [drupal-console](https://drupalconsole.com) | 1.0.0 |
 | [drush](http://www.drush.org)          | 8.1.12 |
 | [git](https://git-scm.com)             | 1.8.3.1 |
 | [laravel installer](https://github.com/laravel/installer)     | 1.3.7 |
 | [mysqldump-secure](https://mysqldump-secure.org) | 0.16.3 |
-| [node](https://nodejs.org)             | 6.11.1 |
+| [node](https://nodejs.org)             | 6.11.2 |
 | [npm](https://www.npmjs.com)           | 3.10.10 |
 | [phalcon-devtools](https://github.com/phalcon/phalcon-devtools)   | 3.0.5 |
 | [symfony installer](https://github.com/symfony/symfony-installer) | 1.5.9 |
