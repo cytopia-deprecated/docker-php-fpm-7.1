@@ -5,15 +5,15 @@ FROM centos:7
 MAINTAINER "cytopia" <cytopia@everythingcli.org>
 
 
-##
-## Labels
-##
+###
+### Labels
+###
 LABEL \
 	name="cytopia's PHP-FPM 7.1 Image" \
 	image="php-fpm-7.1" \
 	vendor="cytopia" \
 	license="MIT" \
-	build-date="2017-08-09"
+	build-date="2017-08-15"
 
 
 ###
@@ -46,8 +46,13 @@ RUN \
 	adduser -u ${MY_UID} -m -s /bin/bash -g ${MY_GROUP} ${MY_USER}
 
 RUN \
+	yum -y update && \
+	yum -y install deltarpm && \
 	yum -y install epel-release && \
+	rpm --import http://rpms.famillecollet.com/RPM-GPG-KEY-remi && \
 	rpm -ivh http://rpms.famillecollet.com/enterprise/remi-release-7.rpm && \
+	yum-config-manager --enable extras && \
+	yum-config-manager --enable epel && \
 	yum-config-manager --enable remi && \
 	yum-config-manager --disable remi-php55 && \
 	yum-config-manager --disable remi-php56 && \
@@ -63,76 +68,147 @@ RUN \
 		echo "enabled=1"; \
 		echo "gpgkey=https://www.mongodb.org/static/pgp/server-3.4.asc"; \
 	) > /etc/yum.repos.d/mongodb.repo && \
-	yum clean all
+	yum clean all && \
+	(rm /var/cache/yum/x86_64/7/timedhosts 2>/dev/null || true) && \
+	(rm /var/cache/yum/x86_64/7/timedhosts.txt 2>/dev/null || true)
 
-RUN yum -y update && yum -y install \
-	php \
-	php-cli \
-	php-fpm \
-	\
-	php-bcmath \
-	php-common \
-	php-gd \
-	php-gmp \
-	php-imap \
-	php-intl \
-	php-ldap \
-	php-mbstring \
-	php-mcrypt \
-	php-mysqli \
-	php-mysqlnd \
-	php-opcache \
-	php-pdo \
-	php-pear \
-	php-pgsql \
-	php-phalcon3 \
-	php-pspell \
-	php-recode \
-	php-redis \
-	php-soap \
-	php-tidy \
-	php-xml \
-	php-xmlrpc \
-	\
-	php-pecl-apcu \
-	php-pecl-imagick \
-	php-pecl-memcache \
-	php-pecl-memcached \
-	php-pecl-mongodb \
-	php-pecl-uploadprogress \
-	php-pecl-xdebug \
-	php-pecl-zip \
-	\
-	postfix \
-	\
-	socat \
-	\
-	nc \
+RUN yum -y update && \
+	while true; do \
+		if yum -y install \
+		php \
+		php-cli \
+		php-fpm \
+		\
+		php-bcmath \
+		php-common \
+		php-gd \
+		php-gmp \
+		php-imap \
+		php-intl \
+		php-ldap \
+		php-mbstring \
+		php-mcrypt \
+		php-mysqli \
+		php-mysqlnd \
+		php-opcache \
+		php-pdo \
+		php-pear \
+		php-pgsql \
+		php-phalcon3 \
+		php-pspell \
+		php-recode \
+		php-redis \
+		php-soap \
+		php-tidy \
+		php-xml \
+		php-xmlrpc \
+		\
+		php-pecl-apcu \
+		php-pecl-imagick \
+		php-pecl-memcache \
+		php-pecl-memcached \
+		php-pecl-mongodb \
+		php-pecl-uploadprogress \
+		php-pecl-xdebug \
+		php-pecl-zip \
+		\
+		postfix \
+		\
+		socat \
+		\
+		; then \
+			break; \
+		else \
+			yum clean metadata && \
+			yum clean all && \
+			(rm /var/cache/yum/x86_64/7/timedhosts 2>/dev/null || true) && \
+			(rm /var/cache/yum/x86_64/7/timedhosts.txt 2>/dev/null || true) && \
+			yum -y update; \
+		fi \
+	done \
 	\
 	&& \
 	\
 	yum -y autoremove && \
 	yum clean metadata && \
-	yum clean all
+	yum clean all && \
+	(rm /var/cache/yum/x86_64/7/timedhosts 2>/dev/null || true) && \
+	(rm /var/cache/yum/x86_64/7/timedhosts.txt 2>/dev/null || true)
+
 
 ###
 ### Install Tools
 ###
-RUN yum -y update && yum -y install \
-	mysql \
-	postgresql96 \
-	mongodb-org-tools \
-	bind-utils \
-	which \
-	git \
-	nodejs \
-	npm \
+RUN yum -y update && \
+	while true; do \
+		if yum -y install \
+		ack \
+		aspell \
+		autoconf \
+		automake \
+		bash-completion \
+		bash-completion-extras \
+		bind-utils \
+		bzip2 \
+		coreutils \
+		devscripts-minimal \
+		dos2unix \
+		file \
+		git \
+		git-svn \
+		hostname \
+		htop \
+		ImageMagick \
+		iputils \
+		mongodb-org-tools \
+		moreutils \
+		mysql \
+		neovim \
+		nmap-ncat \
+		php-pear-PHP-CodeSniffer \
+		postgresql96 \
+		python2-pip \
+		rubygems \
+		sassc \
+		ShellCheck \
+		subversion \
+		sudo \
+		the_silver_searcher \
+		tig \
+		vi \
+		vim \
+		w3m \
+		wget \
+		which \
+		whois \
+		; then \
+			break; \
+		else \
+			yum clean metadata && \
+			yum clean all && \
+			(rm /var/cache/yum/x86_64/7/timedhosts 2>/dev/null || true) && \
+			(rm /var/cache/yum/x86_64/7/timedhosts.txt 2>/dev/null || true) && \
+			yum -y update; \
+		fi \
+	done \
 	\
 	&& \
 	\
 	yum -y autoremove && \
 	yum clean metadata && \
-	yum clean all
+	yum clean all && \
+	(rm /var/cache/yum/x86_64/7/timedhosts 2>/dev/null || true) && \
+	(rm /var/cache/yum/x86_64/7/timedhosts.txt 2>/dev/null || true)
+
+RUN \
+	mkdir -p /usr/local/src && \
+	chown ${MY_USER}:${MY_GROUP} /usr/local/src && \
+	VERSION="$( curl -Lq https://nodejs.org 2>/dev/null | grep LTS | grep -Eo 'data-version.*.' | grep -oE 'v[0-9.]+' )" && \
+	wget -P /usr/local/src https://nodejs.org/dist/${VERSION}/node-${VERSION}-linux-x64.tar.xz && \
+	tar xvf /usr/local/src/node-${VERSION}-linux-x64.tar.xz -C /usr/local/src && \
+	ln -s /usr/local/src/node-${VERSION}-linux-x64 /usr/local/node && \
+	ln -s /usr/local/node/bin/* /usr/local/bin/ && \
+	rm -f /usr/local/src/node-${VERSION}-linux-x64.tar.xz
 
 RUN \
 	curl -sS https://getcomposer.org/installer | php && \
@@ -201,6 +277,24 @@ RUN \
 	ln -s /usr/local/src/phalcon-devtools/phalcon.php /usr/local/bin/phalcon && \
 	chmod +x /usr/local/bin/phalcon
 
+# Awesome-CI
+RUN \
+	mkdir -p /usr/local/src && \
+	chown ${MY_USER}:${MY_GROUP} /usr/local/src && \
+	su - ${MY_USER} -c 'git clone https://github.com/cytopia/awesome-ci.git /usr/local/src/awesome-ci' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/awesome-ci && git checkout $(git describe --abbrev=0 --tags)' && \
+	su - ${MY_USER} -c 'cd /usr/local/src/awesome-ci && ./configure --prefix=/usr/local' && \
+	cd /usr/local/src/awesome-ci && make install
+# Awesome-CI requirements
+RUN \
+	gem install mdl && \
+	gem install scss_lint && \
+	npm install -g eslint && \
+	npm install -g jsonlint && \
+	npm install -g mdlint && \
+	npm install -g gulp
+
+
 ###
 ### Configure PS1
 ###
@@ -219,11 +313,47 @@ RUN \
 
 
 ###
+### Generate locals
+###
+RUN \
+	localedef -i de_CH -f UTF-8 de_CH.UTF-8 && \
+	localedef -i de_DE -f UTF-8 de_DE.UTF-8 && \
+	localedef -i de_LU -f UTF-8 de_LU.UTF-8 && \
+	\
+	localedef -i en_AG -f UTF-8 en_AG.UTF-8 && \
+	localedef -i en_AU -f UTF-8 en_AU.UTF-8 && \
+	localedef -i en_BW -f UTF-8 en_BW.UTF-8 && \
+	localedef -i en_CA -f UTF-8 en_CA.UTF-8 && \
+	localedef -i en_DK -f UTF-8 en_DK.UTF-8 && \
+	localedef -i en_GB -f UTF-8 en_GB.UTF-8 && \
+	localedef -i en_HK -f UTF-8 en_HK.UTF-8 && \
+	localedef -i en_IE -f UTF-8 en_IE.UTF-8 && \
+	localedef -i en_IN -f UTF-8 en_IN.UTF-8 && \
+	localedef -i en_NG -f UTF-8 en_NG.UTF-8 && \
+	localedef -i en_NZ -f UTF-8 en_NZ.UTF-8 && \
+	localedef -i en_PH -f UTF-8 en_PH.UTF-8 && \
+	localedef -i en_SG -f UTF-8 en_SG.UTF-8 && \
+	localedef -i en_US -f UTF-8 en_US.UTF-8 && \
+	localedef -i en_ZA -f UTF-8 en_ZA.UTF-8 && \
+	localedef -i en_ZM -f UTF-8 en_ZM.UTF-8 && \
+	localedef -i en_ZW -f UTF-8 en_ZW.UTF-8 && \
+	\
+	localedef -i ru_RU -f UTF-8 ru_RU.UTF-8 && \
+	localedef -i ru_UA -f UTF-8 ru_UA.UTF-8 && \
+	\
+	localedef -i zh_CN -f UTF-8 zh_CN.UTF-8 && \
+	localedef -i zh_HK -f UTF-8 zh_HK.UTF-8 && \
+	localedef -i zh_SG -f UTF-8 zh_SG.UTF-8 && \
+	localedef -i zh_TW -f UTF-8 zh_TW.UTF-8
+
+
+###
 ### Bootstrap Scipts
 ###
 COPY ./scripts/docker-install.sh /
 COPY ./scripts/docker-entrypoint.sh /
 COPY ./scripts/bash-profile /etc/bash_profile
+COPY ./scripts/sudo-devilbox /etc/sudoers.d/devilbox
 
 
 ###

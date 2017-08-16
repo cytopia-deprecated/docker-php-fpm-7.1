@@ -50,8 +50,8 @@ run() {
 	echo
 	printf "  ==> ${_red}%s \$ ${_green}$( echo "${_cmd}" | sed 's|%|%%|g' )${_reset}\n" "${_user}"
 	sh -c "LANG=C LC_ALL=C ${_cmd}"
-	echo
 }
+
 run_if() {
 	_cmd="${1}"
 	_true="${2}"
@@ -195,10 +195,9 @@ docker_stop_httpd() {
 ### [01] Build
 ############################################################
 print_h1 "[01]   B U I L D I N G"
+
 docker_stop >/dev/null 2>&1 || true
-docker_stop_mysql >/dev/null 2>&1 || true
-docker_stop_httpd >/dev/null 2>&1 || true
-run "docker build -t cytopia/${MY_DOCKER_NAME} ${CWD}/"
+run "docker build --no-cache -t cytopia/${MY_DOCKER_NAME} ${CWD}/"
 
 
 
